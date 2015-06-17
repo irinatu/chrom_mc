@@ -24,10 +24,10 @@ def pars_inp():
     ## read/validate command-line arguments
     optparser=optparse.OptionParser(usage="%prog [<options>]")
 
-#    optparser.add_option('-f',type="string",
-#        dest="Structure",
-#        default='',
-#        help="A filename with structure of MC simulation")
+    optparser.add_option('-p',type="string",
+        dest="Out_str",
+        default='',
+        help="A filename with structure of MC trajectory")
     optparser.add_option('-s',type="int",
         dest="Steps",
         default=100000,
@@ -257,12 +257,19 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
     return traj
 
 opts = pars_inp()
+
+if opts.Out_str == '':
+    fn = "MC_traj_%ibin_%ichain.pdb" %(M,N)
+elif "." in opts.Out_str:
+    fn = opts.Out_str.split('.')[0] + ".pdb"
+else: fn = opts.Out_str + ".pdb"
+
 t1 = time.time() 
 c,b,state=initialize_random()
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
-fn="test_run_2-512-d3-rnd-prof_pendolino_test.pdb"
+#fn="test_run_2-512-d3-rnd-prof_pendolino_test.pdb"
 t=metropolis(c,b,state,fn,n=opts.Steps)
 t1 = t2
 t2 = time.time()
