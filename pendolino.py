@@ -139,17 +139,34 @@ DIST=3
 def write_as_xyz(chain,binders,f,name="chromosome and binders"):
     l=chain.shape[0]
     n=binders.shape[0]
-    f.write("%d\n%s"%(l+n,name))
+    f.write("HEADER %d\nTITLE %s"%(l+n,name))
+    at_nr = 0
+
     for i in range(l):
         if i%2:
             a="N"
+            r = "BOU"
         else:
             a="C"
-        f.write("\n%s %f %f %f"%(a,chain[i,0]*DIST,chain[i,1]*DIST,chain[i,2]*DIST))
+            r = "UNB"
+        at_nr += 1
+        line = "\nATOM  " + str(at_nr).rjust(5) + " " + a.center(4) + " " + r + "  " + str(at_nr).rjust(4) + "    " + str(round(chain[i,0]*DIST, 3)).rjust(8) + str(round(chain[i,1]*DIST, 3)).rjust(8) + str(round(chain[i,2]*DIST, 3)).rjust(8) + "  0.00 00.00"
+        #f.write("\n%s %f %f %f"%(a,chain[i,0]*DIST,chain[i,1]*DIST,chain[i,2]*DIST))
+        f.write(line)
+
+    chain_at = at_nr
     for i in range(n):
+        at_nr += 1
         a="O"
-        f.write("\n%s %f %f %f"%(a,binders[i,0]*DIST,binders[i,1]*DIST,binders[i,2]*DIST))
-    f.write("\n")
+        r = "BIN"
+        line = "\nATOM  " + str(at_nr).rjust(5) + " " + a.center(4) + " " + r + "  " + str(at_nr).rjust(4) + "    " + str(round(binders[i,0]*DIST, 3)).rjust(8) + str(round(binders[i,1]*DIST, 3)).rjust(8) + str(round(binders[i,2]*DIST, 3)).rjust(8) + "  0.00 00.00"
+        f.write(line)
+        #f.write("\n%s %f %f %f"%(a,binders[i,0]*DIST,binders[i,1]*DIST,binders[i,2]*DIST))
+
+    for i in range(1, chain_at-1):
+        line = "\nCONECT" + str(i).rjust(5) +  str(i+1).rjust(5)
+        f.write(line)
+    f.write("\nEND   \n")
 
 def count_bonds(pos, val, state):
     bonds = 0
@@ -215,8 +232,8 @@ c,b,state=initialize_random()
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
-fn="test_run_2-512-d3-rnd-prof_pendolino.xyz"
-t=metropolis(c,b,state,fn,n=500)
+fn="test_run_2-512-d3-rnd-prof_pendolino_test.xyz"
+t=metropolis(c,b,state,fn,n=100)
 t1 = t2
 t2 = time.time()
 print "metropolis: ", t2 - t1
