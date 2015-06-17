@@ -6,8 +6,7 @@ MOVES=numpy.array([[0,0,1],[0,1,0],[1,0,0],[0,0,-1],[0,-1,0],[-1,0,0],[1,0,1],[0
 #accepted matching positions of binding sites
 BMOVES=numpy.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])
 
-N=512 # lenght of the chian
-M=256 # nr of binders
+
 R=100 
 BOUND=math.floor(math.sqrt(3)*R)
 random.seed(1)
@@ -32,6 +31,14 @@ def pars_inp():
         dest="Steps",
         default=100000,
         help="Number of steps for simulation (default 100000)")
+    optparser.add_option('-l',type="int",
+        dest="Ch_lenght",
+        default=512,
+        help="Lenght of the chain (default 512)")
+    optparser.add_option('-b',type="int",
+        dest="Binders",
+        default=256,
+        help="Number of binders (default 256)")
 			
     (opts, args)=optparser.parse_args()
 
@@ -58,7 +65,7 @@ def initialize_import(f):
     state = list_ob[2]
     return ch,b,state
 
-def initialize_random(n=N,m=M,bound=BOUND):
+def initialize_random(n,m,bound=BOUND):
     chain=numpy.zeros((n,3), dtype=numpy.int)
     binders=numpy.zeros((m,3), dtype=numpy.int)
     state = numpy.zeros((BOUND, BOUND, BOUND), dtype=numpy.int)
@@ -257,15 +264,17 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
     return traj
 
 opts = pars_inp()
-
 if opts.Out_str == '':
     fn = "MC_traj_%ibin_%ichain.pdb" %(M,N)
 elif "." in opts.Out_str:
     fn = opts.Out_str.split('.')[0] + ".pdb"
 else: fn = opts.Out_str + ".pdb"
 
+N=opts.Ch_lenght # lenght of the chian
+M=opts.Binders # nr of binders
+
 t1 = time.time() 
-c,b,state=initialize_random()
+c,b,state=initialize_random(N, M)
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
