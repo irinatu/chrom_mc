@@ -1,4 +1,4 @@
-import numpy,math,time
+import numpy,math,time, optparse, sys
 import random as random
 
 #accepted move vectors
@@ -19,6 +19,26 @@ REGDNA=3
 
 # max distance of good neighbors
 GOOD_NEIGH=3
+
+def pars_inp():
+    ## read/validate command-line arguments
+    optparser=optparse.OptionParser(usage="%prog [<options>]")
+
+#    optparser.add_option('-f',type="string",
+#        dest="Structure",
+#        default='',
+#        help="A filename with structure of MC simulation")
+    optparser.add_option('-s',type="int",
+        dest="Steps",
+        default=100000,
+        help="Number of steps for simulation (default 100000)")
+			
+    (opts, args)=optparser.parse_args()
+
+    if len(sys.argv) == 1:
+        print optparser.format_help() #prints help if no arguments
+        sys.exit(1)
+    return opts	
 
 def init_dist_matrix(max_d=GOOD_NEIGH+1):
     dist_matrix=numpy.zeros((max_d, max_d, max_d),dtype=numpy.float32)
@@ -227,13 +247,14 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
             
     return traj
 
+opts = pars_inp()
 t1 = time.time() 
 c,b,state=initialize_random()
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
 fn="test_run_2-512-d3-rnd-prof_pendolino_test.xyz"
-t=metropolis(c,b,state,fn,n=100)
+t=metropolis(c,b,state,fn,n=opts.Steps)
 t1 = t2
 t2 = time.time()
 print "metropolis: ", t2 - t1
