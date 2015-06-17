@@ -1,4 +1,4 @@
-import numpy,math,time, optparse, sys
+import numpy,math,time, optparse, sys, pickle
 import random as random
 
 #accepted move vectors
@@ -48,10 +48,14 @@ def init_dist_matrix(max_d=GOOD_NEIGH+1):
                 dist_matrix[i][j][k] = math.sqrt(i**2+j**2+k**2)
     return dist_matrix
 DIST_MATRIX = init_dist_matrix()
+#print DIST_MATRIX
 
 def initialize_import(f):
     import pickle
-    ch,b,state=pickle.load(open(f))
+    list_ob = pickle.load(open(f))
+    ch = list_ob[0]
+    b = list_ob[1]
+    state = list_ob[2]
     return ch,b,state
 
 def initialize_random(n=N,m=M,bound=BOUND):
@@ -245,6 +249,11 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
                 state[tuple(old + move)] = state[tuple(old)]
                 state[tuple(old)] = EMPTY
             
+    # load the last state to the pickle
+    l_obj=[ch,b,state]
+    fn = fn.split('.pdb')[0] + ".pick"
+    file = open (fn, 'w')
+    pickle.dump(l_obj, file)
     return traj
 
 opts = pars_inp()
@@ -253,7 +262,7 @@ c,b,state=initialize_random()
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
-fn="test_run_2-512-d3-rnd-prof_pendolino_test.xyz"
+fn="test_run_2-512-d3-rnd-prof_pendolino_test.pdb"
 t=metropolis(c,b,state,fn,n=opts.Steps)
 t1 = t2
 t2 = time.time()
