@@ -273,14 +273,16 @@ if opts.In_str == '':
 else: 
     rand_init = False
 
+
+N=opts.Ch_lenght # lenght of the chian
+M=opts.Binders # nr of binders
+
 if opts.Out_str == '':
     fn = "MC_traj_%ibin_%ichain.pdb" %(M,N)
 elif "." in opts.Out_str:
     fn = opts.Out_str.split('.')[0] + ".pdb"
 else: fn = opts.Out_str + ".pdb"
 
-N=opts.Ch_lenght # lenght of the chian
-M=opts.Binders # nr of binders
 
 t1 = time.time()
 if rand_init: 
