@@ -205,7 +205,7 @@ def write_as_xyz(chain,binders,f,name="chromosome and binders"):
 def count_bonds(pos, val, state):
     bonds = 0
     for bmove in BMOVES:
-        if within_bounds(pos+bmove) and state[tuple(pos+bmove)] == val:
+        if within_bounds(pos+bmove, BOUND) and state[tuple(pos+bmove)] == val:
              bonds += 1
     return bonds
 
