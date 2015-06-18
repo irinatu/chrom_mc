@@ -26,7 +26,11 @@ def pars_inp():
     optparser.add_option('-p',type="string",
         dest="Out_str",
         default='',
-        help="A filename with structure of MC trajectory")
+        help="An output filename with MC trajectory")
+    optparser.add_option('-i',type="string",
+        dest="In_str",
+        default='',
+        help="An input state (pickled file)")
     optparser.add_option('-s',type="int",
         dest="Steps",
         default=100000,
@@ -58,7 +62,6 @@ DIST_MATRIX = init_dist_matrix()
 #print DIST_MATRIX
 
 def initialize_import(f):
-    import pickle
     list_ob = pickle.load(open(f))
     ch = list_ob[0]
     b = list_ob[1]
@@ -264,6 +267,12 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
     return traj
 
 opts = pars_inp()
+
+if opts.In_str == '':
+    rand_init = True
+else: 
+    rand_init = False
+
 if opts.Out_str == '':
     fn = "MC_traj_%ibin_%ichain.pdb" %(M,N)
 elif "." in opts.Out_str:
@@ -273,8 +282,11 @@ else: fn = opts.Out_str + ".pdb"
 N=opts.Ch_lenght # lenght of the chian
 M=opts.Binders # nr of binders
 
-t1 = time.time() 
-c,b,state=initialize_random(N, M)
+t1 = time.time()
+if rand_init: 
+    c,b,state=initialize_random(N, M)
+else: 
+    c,b,state = initialize_import(opts.In_str)
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
