@@ -6,15 +6,18 @@ MOVES=numpy.array([[0,0,1],[0,1,0],[1,0,0],[0,0,-1],[0,-1,0],[-1,0,0],[1,0,1],[0
 #accepted matching positions of binding sites
 BMOVES=numpy.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])
 
-
-R=100 
-BOUND=math.floor(math.sqrt(3)*R)
+# radius of the nucleus
+R=100
+# 2 x radius + a fringe, because lamin barrier has to be hermetic
+BOUND = 2 * R + 2
 random.seed(1)
 
 EMPTY=0
 BINDER=1
-BSITE=2
-REGDNA=3
+LAMIN=2
+BSITE_R=3
+BSITE_L=4
+REGDNA=5
 
 # max distance of good neighbors
 GOOD_NEIGH=3
@@ -55,7 +58,6 @@ def init_dist_matrix(max_d=GOOD_NEIGH+1):
                 dist_matrix[i][j][k] = math.sqrt(i**2+j**2+k**2)
     return dist_matrix
 DIST_MATRIX = init_dist_matrix()
-#print DIST_MATRIX
 
 def initialize_import(f):
     import pickle
@@ -65,33 +67,66 @@ def initialize_import(f):
     state = list_ob[2]
     return ch,b,state
 
+def getStateWithLamins(bound):
+
+    state = numpy.zeros((bound, bound, bound), dtype=numpy.int)
+    MIDDLE = bound / 2
+
+    def dist(x, y, z):
+        return math.sqrt((x - MIDDLE) ** 2 + (y - MIDDLE) ** 2 + (z - MIDDLE) ** 2)
+
+    for x in range(0, BOUND):
+        for y in range(0, BOUND):
+            for z in range(0, BOUND):
+                if abs(dist(x, y, z) - MIDDLE + 1) <= 1:
+                    state[x, y, z] = LAMIN
+
+    return state
+
 def initialize_random(n,m,bound=BOUND):
     chain=numpy.zeros((n,3), dtype=numpy.int)
     binders=numpy.zeros((m,3), dtype=numpy.int)
-    state = numpy.zeros((BOUND, BOUND, BOUND), dtype=numpy.int)
+    state=getStateWithLamins(bound)
 
     chain[0, 0] = bound / 2
     chain[0, 1] = bound / 2
     chain[0, 2] = bound / 2
 
+    def get_site_type_list(fpath, length):
+        positions = [0] * length
+        for l in open(fpath):
+            positions[int(l)] = 1
+        return positions
+
+    regular_bsites = get_site_type_list(sys.argv[1], n)
+    lamin_bsites   = get_site_type_list(sys.argv[2], n)
+
+    def get_site_type(i, regular_bsites, lamin_bsites):
+        if regular_bsites[i] == 1:
+            site_type = BSITE_R
+        if lamin_bsites[i] == 1:
+            site_type = BSITE_L
+        return REGDNA
+
     cur=chain[0]
-    state[tuple(cur)] = BSITE
+    state[tuple(cur)] = get_site_type(0, regular_bsites, lamin_bsites)
     for i in range(1,n):
         mov=random.choice(MOVES)
         tries=0
-        while tries<100 and not (within_bounds(cur+mov, bound) and no_collisions(tuple(cur+mov), state)):
+        while tries<100 and not (no_collisions(tuple(cur+mov), state)):
             mov=random.choice(MOVES)
             tries+=1
         assert tries != 100, "unable to find initialization"
         chain[i]=cur+mov
-        state[tuple(chain[i])] = BSITE if i % 2 == 0 else REGDNA
+
+        state[tuple(chain[i])] = get_site_type(i, regular_bsites, lamin_bsites)
         cur=chain[i]
 
     for i in range(m):
         cur=chain[i*n/m]
         mov=2*random.choice(MOVES)
         tries=0
-        while tries<100 and not (within_bounds(cur+mov, bound) and no_collisions(tuple(cur+mov), state)):
+        while tries<100 and not (no_collisions(tuple(cur+mov), state)):
             mov=2*random.choice(MOVES)
             tries+=1
         binders[i]=cur+mov
@@ -102,13 +137,13 @@ def initialize_random(n,m,bound=BOUND):
 def dist(r1,r2):
     return DIST_MATRIX[tuple(abs(r1-r2))]
 
-def rg(chain):
-    n=chain.shape[0]
-    res=0.0
-    for i in range(n):
-        for j in range(i):
-            res+=old_dist(chain[i],chain[j])
-    return 2*res/(n*(n-1))
+#def rg(chain):
+#   n=chain.shape[0]
+#    res=0.0
+#    for i in range(n):
+#        for j in range(i):
+#            res+=old_dist(chain[i],chain[j])
+#    return 2*res/(n*(n-1))
 
 def good_neighbors(x,i,chain):
     #check neighbors (chain)
@@ -131,22 +166,28 @@ def no_collisions(x, state):
         return False
     return True
 
-def bonds(chain,binders,state):
-
-    def pos_in(pos):
-        return numpy.all(pos >= 0) and numpy.all(pos < BOUND)
+def bonds(chain,state):
 
     bonds=0
-    for j in range(binders.shape[0]):
-        binder=binders[j]
-        for bmove in BMOVES: 
-            new = binder + bmove
-            if pos_in(new) and state[tuple(new)] == BSITE:
-                bonds += 1 
-    return bonds
+    for j in range(chain.shape[0]):
+        molecule_pos=chain[j]
+        molecule=state[tuple(molecule_pos)]
 
-def within_bounds(x,bound):
-    return numpy.all(x >= 0) and numpy.all(x < bound)
+        if molecule == REGDNA:
+            continue
+ 
+        if molecule == BSITE_R:
+            binding = BINDER
+        elif molecule == BSITE_L:
+            binding = LAMIN 
+
+        for bmove in BMOVES: 
+            new = molecule_pos + bmove
+            enc = state[tuple(new)]
+            if enc == binding:
+                bonds += 1 
+
+    return bonds
 
 def modify(chain,binders,state,bound=BOUND):
     #move binders
@@ -155,14 +196,14 @@ def modify(chain,binders,state,bound=BOUND):
         move=random.choice(MOVES)
         new=move+binders[i]
 
-        if within_bounds(new,bound) and no_collisions(tuple(new), state):
+        if no_collisions(tuple(new), state):
             return False, i, move
     #move residues
     else:
         i = random.randint(0,len(chain)-1)
         move=random.choice(MOVES)
         new=move+chain[i]
-        if within_bounds(new,bound) and good_neighbors(new,i,chain) and no_collisions(tuple(new), state):
+        if good_neighbors(new,i,chain) and no_collisions(tuple(new), state):
             return True, i, move
     return None
 
@@ -194,6 +235,8 @@ def write_as_xyz(chain,binders,f,name="chromosome and binders"):
         f.write(line)
         #f.write("\n%s %f %f %f"%(a,binders[i,0]*DIST,binders[i,1]*DIST,binders[i,2]*DIST))
 
+    ### output lamins
+
     for i in range(1, chain_at-1):
         line = "\nCONECT" + str(i).rjust(5) +  str(i+1).rjust(5)
         f.write(line)
@@ -209,7 +252,7 @@ def count_bonds(pos, val, state):
 DELTA=2
 def metropolis(chain,binders,state,fn,name="chromosome",n=100):
 
-    E=bonds(chain,binders,state)
+    E=bonds(chain,state)
     traj=[(chain,binders,E)]
 
     f=open(fn,"w")
@@ -227,14 +270,16 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
             if in_chain:
                 old = numpy.copy(ch[i])
                 ch[i] = ch[i] + move
-                if state[tuple(old)] == BSITE:
+                if state[tuple(old)] == BSITE_R:
                     Enew = E + count_bonds(ch[i], BINDER, state) - count_bonds(old, BINDER, state)
+                elif state[tuple(old)] == BSITE_L:
+                    Enew = E + count_bonds(ch[i], LAMIN, state) - count_bonds(old, LAMIN, state)
                 else: # REGDNA
                     Enew = E
             else:
                 old = numpy.copy(b[i])
                 b[i] = b[i] + move
-                Enew = E + count_bonds(b[i], BSITE, state) - count_bonds(old, BSITE, state)
+                Enew = E + count_bonds(b[i], BSITE_R, state) - count_bonds(old, BSITE_R, state)
         else:
             Enew = E
 
