@@ -24,7 +24,7 @@ GOOD_NEIGH=3
 
 def pars_inp():
     ## read/validate command-line arguments
-    optparser=optparse.OptionParser(usage="%prog [<options>]")
+    optparser=optparse.OptionParser(usage="%prog regular_dsites.txt lamin_bsites.txt [<options>]")
 
     optparser.add_option('-p',type="string",
         dest="Out_str",
@@ -49,7 +49,7 @@ def pars_inp():
 			
     (opts, args)=optparser.parse_args()
 
-    if len(sys.argv) == 1:
+    if len(sys.argv) <= 2:
         print optparser.format_help() #prints help if no arguments
         sys.exit(1)
     return opts	
@@ -104,12 +104,14 @@ def initialize_random(n,m,bound=BOUND):
     regular_bsites = get_site_type_list(sys.argv[1], n)
     lamin_bsites   = get_site_type_list(sys.argv[2], n)
 
-    def get_site_type(i, regular_bsites, lamin_bsites):
+    def get_site_type(i, regular_bsites, lamin_bsites): # we should remember that it is possibility, that one site can interact with lamin and binders simultaneously
         if regular_bsites[i] == 1:
             site_type = BSITE_R
-        if lamin_bsites[i] == 1:
+        elif lamin_bsites[i] == 1:
             site_type = BSITE_L
-        return REGDNA
+        else: site_type = REGDNA
+        #print "SITE", site_type
+        return site_type
 
     cur=chain[0]
     state[tuple(cur)] = get_site_type(0, regular_bsites, lamin_bsites)
@@ -337,6 +339,14 @@ else:
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
+
+#print type(state), state.shape
+#for i in state:
+#    for j in i:
+#        for k in j:
+#            if k != 0:
+#                print k
+
 #fn="test_run_2-512-d3-rnd-prof_pendolino_test.pdb"
 t=metropolis(c,b,state,fn,n=opts.Steps)
 t1 = t2
