@@ -283,7 +283,7 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
             else:
                 old = numpy.copy(b[i])
                 b[i] = b[i] + move
-                Enew = E + count_bonds(b[i], BSITE_R, state) - count_bonds(old, BSITE_R, state)
+                Enew = E + count_bonds(b[i], [BSITE_R], state) - count_bonds(old, [BSITE_R], state)
         else:
             Enew = E
 
