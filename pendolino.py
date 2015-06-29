@@ -110,7 +110,6 @@ def initialize_random(n,m,bound=BOUND):
         elif lamin_bsites[i] == 1:
             site_type = BSITE_L
         else: site_type = REGDNA
-        #print "SITE", site_type
         return site_type
 
     cur=chain[0]
@@ -182,14 +181,14 @@ def bonds(chain,state):
             continue
  
         if molecule == BSITE_R:
-            binding = BINDER
+            binding = [BINDER]
         elif molecule == BSITE_L:
-            binding = LAMIN 
+            binding = [LAMIN, BINDER]
 
         for bmove in BMOVES: 
             new = molecule_pos + bmove
             enc = state[tuple(new)]
-            if enc == binding:
+            if enc in binding:
                 bonds += 1 
 
     return bonds
@@ -247,10 +246,10 @@ def write_as_xyz(chain,binders,f,name="chromosome and binders"):
         f.write(line)
     f.write("\nEND   \n")
 
-def count_bonds(pos, val, state):
+def count_bonds(pos, accepted, state):
     bonds = 0
     for bmove in BMOVES:
-        if state[tuple(pos+bmove)] == val:
+        if state[tuple(pos+bmove)] in accepted:
              bonds += 1
     return bonds
 
@@ -276,9 +275,9 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
                 old = numpy.copy(ch[i])
                 ch[i] = ch[i] + move
                 if state[tuple(old)] == BSITE_R:
-                    Enew = E + count_bonds(ch[i], BINDER, state) - count_bonds(old, BINDER, state)
+                    Enew = E + count_bonds(ch[i], [BINDER], state) - count_bonds(old, [BINDER], state)
                 elif state[tuple(old)] == BSITE_L:
-                    Enew = E + count_bonds(ch[i], LAMIN, state) - count_bonds(old, LAMIN, state)
+                    Enew = E + count_bonds(ch[i], [LAMIN, BINDER], state) - count_bonds(old, [LAMIN, BINDER], state)
                 else: # REGDNA
                     Enew = E
             else:
