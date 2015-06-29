@@ -18,6 +18,7 @@ LAMIN=2
 BSITE_R=3
 BSITE_L=4
 REGDNA=5
+DIST=3
 
 # max distance of good neighbors
 GOOD_NEIGH=3
@@ -48,8 +49,9 @@ def pars_inp():
         help="Number of binders (default 256)")
 			
     (opts, args)=optparser.parse_args()
+    
 
-    if len(sys.argv) <= 2:
+    if len(args) < 2:
         print optparser.format_help() #prints help if no arguments
         sys.exit(1)
     return opts	
@@ -70,10 +72,14 @@ def initialize_import(f):
     state = list_ob[2]
     return ch,b,state
 
-def getStateWithLamins(bound):
+def getStateWithLamins(bound, f):
 
     state = numpy.zeros((bound, bound, bound), dtype=numpy.int)
     MIDDLE = bound / 2
+    lam_name = f.split('.pdb')[0]+'_lamin.pdb'
+    save_lam = open(lam_name, "w")
+    save_lam.write("HEADER LAMINA%s")
+    at_nr = 1
 
     def dist(x, y, z):
         return math.sqrt((x - MIDDLE) ** 2 + (y - MIDDLE) ** 2 + (z - MIDDLE) ** 2)
@@ -81,15 +87,22 @@ def getStateWithLamins(bound):
     for x in range(0, BOUND):
         for y in range(0, BOUND):
             for z in range(0, BOUND):
-                if abs(dist(x, y, z) - MIDDLE + 1) <= 1:
+                border = abs(dist(x, y, z) - MIDDLE + 1)
+                if border <= 1:
                     state[x, y, z] = LAMIN
-
+                    if border == 1:
+                        #print border
+                        line = "\nATOM  " + str(at_nr).rjust(5) + " " + "P".center(4) + " " + "LAM" + "  " + str(at_nr).rjust(4) + "    " + str(round(x*DIST, 3)).rjust(8) + str(round(y*DIST, 3)).rjust(8) + str(round(z*DIST, 3)).rjust(8) + "  0.00 00.00"
+                        at_nr += 1
+                        save_lam.write(line)
+                    
+    save_lam.close()
     return state
 
-def initialize_random(n,m,bound=BOUND):
+def initialize_random(n,m,fa,bound=BOUND):
     chain=numpy.zeros((n,3), dtype=numpy.int)
     binders=numpy.zeros((m,3), dtype=numpy.int)
-    state=getStateWithLamins(bound)
+    state=getStateWithLamins(bound, fa)
 
     chain[0, 0] = bound / 2
     chain[0, 1] = bound / 2
@@ -122,7 +135,6 @@ def initialize_random(n,m,bound=BOUND):
             tries+=1
         assert tries != 100, "unable to find initialization"
         chain[i]=cur+mov
-
         state[tuple(chain[i])] = get_site_type(i, regular_bsites, lamin_bsites)
         cur=chain[i]
 
@@ -211,7 +223,7 @@ def modify(chain,binders,state,bound=BOUND):
             return True, i, move
     return None
 
-DIST=3
+
 def write_as_xyz(chain,binders,f,name="chromosome and binders"):
     l=chain.shape[0]
     n=binders.shape[0]
@@ -332,7 +344,7 @@ else: fn = opts.Out_str + ".pdb"
 
 t1 = time.time()
 if rand_init: 
-    c,b,state=initialize_random(N, M)
+    c,b,state=initialize_random(N, M, fn)
 else: 
     c,b,state = initialize_import(opts.In_str)
 t2 = time.time()
