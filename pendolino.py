@@ -49,7 +49,7 @@ def pars_inp():
 			
     (opts, args)=optparser.parse_args()
 
-    if len(sys.argv) <= 2:
+    if len(args) <= 2:
         print optparser.format_help() #prints help if no arguments
         sys.exit(1)
     return opts	
@@ -91,9 +91,7 @@ def initialize_random(n,m,bound=BOUND):
     binders=numpy.zeros((m,3), dtype=numpy.int)
     state=getStateWithLamins(bound)
 
-    chain[0, 0] = bound / 2
-    chain[0, 1] = bound / 2
-    chain[0, 2] = bound / 2
+    chain[0] = [bound / 2] * 3
 
     def get_site_type_list(fpath, length):
         positions = [0] * length
@@ -104,12 +102,12 @@ def initialize_random(n,m,bound=BOUND):
     regular_bsites = get_site_type_list(sys.argv[1], n)
     lamin_bsites   = get_site_type_list(sys.argv[2], n)
 
-    def get_site_type(i, regular_bsites, lamin_bsites): # we should remember that it is possibility, that one site can interact with lamin and binders simultaneously
+    def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
         if regular_bsites[i] == 1:
-            site_type = BSITE_R
+            return BSITE_R
         elif lamin_bsites[i] == 1:
-            site_type = BSITE_L
-        else: site_type = REGDNA
+            return BSITE_L
+        # site_type = REGDNA
         return site_type
 
     cur=chain[0]
@@ -141,12 +139,13 @@ def initialize_random(n,m,bound=BOUND):
 def dist(r1,r2):
     return DIST_MATRIX[tuple(abs(r1-r2))]
 
+# this is not going to work - dist function does not work for sufficient distances right now
 #def rg(chain):
 #   n=chain.shape[0]
 #    res=0.0
 #    for i in range(n):
 #        for j in range(i):
-#            res+=old_dist(chain[i],chain[j])
+#            res+=dist(chain[i],chain[j])
 #    return 2*res/(n*(n-1))
 
 def good_neighbors(x,i,chain):
@@ -212,7 +211,7 @@ def modify(chain,binders,state,bound=BOUND):
     return None
 
 DIST=3
-def write_as_xyz(chain,binders,f,name="chromosome and binders"):
+def write_as_pdb(chain,binders,f,name="chromosome and binders"):
     l=chain.shape[0]
     n=binders.shape[0]
     f.write("HEADER %d\nTITLE %s"%(l+n,name))
@@ -239,8 +238,6 @@ def write_as_xyz(chain,binders,f,name="chromosome and binders"):
         f.write(line)
         #f.write("\n%s %f %f %f"%(a,binders[i,0]*DIST,binders[i,1]*DIST,binders[i,2]*DIST))
 
-    ### output lamins
-
     for i in range(1, chain_at-1):
         line = "\nCONECT" + str(i).rjust(5) +  str(i+1).rjust(5)
         f.write(line)
@@ -260,7 +257,7 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
     traj=[(chain,binders,E)]
 
     f=open(fn,"w")
-    write_as_xyz(chain,binders,f,name+";frame="+str(len(traj))+";bonds="+str(E))
+    write_as_pbd(chain,binders,f,name+";frame="+str(len(traj))+";bonds="+str(E))
     f.close()
 
     for step in range(n):
@@ -296,7 +293,7 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
                 E=Enew
                 f=open(fn,"a")
                 print "iter",step, "energy:",E, "accepted:",len(traj)#,"Rg:",rg(chain)
-                write_as_xyz(chain,binders,f,name+";frame="+str(len(traj))+";bonds="+str(E))
+                write_as_pdb(chain,binders,f,name+";frame="+str(len(traj))+";bonds="+str(E))
                 f.close()
 
             chain=ch
@@ -305,7 +302,7 @@ def metropolis(chain,binders,state,fn,name="chromosome",n=100):
                 state[tuple(old + move)] = state[tuple(old)]
                 state[tuple(old)] = EMPTY
             
-    # load the last state to the pickle
+    # dump the last state to the pickle
     l_obj=[ch,b,state]
     fn = fn.split('.pdb')[0] + ".pick"
     file = open (fn, 'w')
@@ -338,13 +335,6 @@ else:
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND=numpy.max(c)
-
-#print type(state), state.shape
-#for i in state:
-#    for j in i:
-#        for k in j:
-#            if k != 0:
-#                print k
 
 #fn="test_run_2-512-d3-rnd-prof_pendolino_test.pdb"
 t=metropolis(c,b,state,fn,n=opts.Steps)
