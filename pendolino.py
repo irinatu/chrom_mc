@@ -79,21 +79,21 @@ def getStateWithLamins(bound, f):
     MIDDLE = bound / 2
     lam_name = f.split('.pdb')[0] + '_lamin.pdb'
     save_lam = open(lam_name, "w")
-    save_lam.write("HEADER LAMINA%s")
+    save_lam.write("HEADER LAMINA")
     at_nr = 1
 
     def dist(x, y, z):
         return math.sqrt((x - MIDDLE)**2 + (y - MIDDLE)**2 + (z - MIDDLE)**2)
 
-    for x in range(0, BOUND):
-        for y in range(0, BOUND):
-            for z in range(0, BOUND):
+    for x in range(BOUND):
+        for y in range(BOUND):
+            for z in range(BOUND):
                 border = abs(dist(x, y, z) - MIDDLE + 1)
-                if border <= 1:
+                if border <= 2:
                     state[x, y, z] = LAMIN
                     if border == 1:
                         #print border
-                        line = "\nATOM  " + str(at_nr).rjust(5) + " " + "P".center(4) + " " + "LAM" + "  " + str(at_nr).rjust(4) + "    " + str(round(x * DIST, 3)).rjust(8) + str(round(y * DIST, 3)).rjust(8) + str(round(z * DIST, 3)).rjust(8) + "  0.00 00.00"
+                        line = "\nATOM  " + str(at_nr).rjust(5) + " " + "O".center(4) + " " + "LAM" + "  " + str(at_nr).rjust(4) + "    " + str(round(x * DIST, 3)).rjust(8) + str(round(y * DIST, 3)).rjust(8) + str(round(z * DIST, 3)).rjust(8) + "  0.00 00.00"
                         at_nr += 1
                         save_lam.write(line)
                     
@@ -123,7 +123,7 @@ def initialize_random(n, m, fa, bound = BOUND):
             return BSITE_R
         elif lamin_bsites[i] == 1:
             return BSITE_L
-        return site_type
+        return REGDNA
 
     cur = chain[0]
     state[tuple(cur)] = get_site_type(0, regular_bsites, lamin_bsites)
@@ -137,8 +137,8 @@ def initialize_random(n, m, fa, bound = BOUND):
         chain[i] = cur + mov
         state[tuple(chain[i])] = get_site_type(i, regular_bsites, lamin_bsites)
 
-        if count_bonds(chain[i]), [LAMIN], state) > 0:
-            attached_to_lamins.append(chain[i])
+        if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
+            attached_to_lamins.append(tuple(chain[i]))
 
         cur = chain[i]
 
@@ -220,31 +220,60 @@ def modify(chain, binders, state, bound = BOUND):
     return None
 
 DIST = 3
-def write_as_pdb(chain, binders, f, name = "chromosome and binders"):
+def write_as_pdb(chain, binders, attached_to_lamins, state, f, name = "chromosome and binders"):
 
     l = chain.shape[0]
     n = binders.shape[0]
     f.write("HEADER %d\nTITLE %s" % (l + n, name))
     at_nr = 0
 
+    def pdb_line(at_nr, desc, pos):
+        return "\nATOM  " + str(at_nr).rjust(5) + " " + "C".center(4) + " " + desc + "  " + str(at_nr).rjust(4) + "    " + str(round(pos[0] * DIST, 3)).rjust(8) + str(round(pos[1] * DIST, 3)).rjust(8) + str(round(pos[2] * DIST, 3)).rjust(8) + "  0.00 00.00"
+
     for i in range(l):
-        if i % 2:
-            a = "N"
-            r = "BOU"
-        else:
-            a = "C"
+        cur_chain = chain[i]
+        if state[tuple(cur_chain)] == REGDNA:
             r = "UNB"
+        elif state[tuple(cur_chain)] == BSITE_R:
+            r = "BOU"
+        else: # BSITE_L
+            if tuple(cur_chain) in attached_to_lamins:
+                r = "LAS"
+            else:
+                r = "NLA"
         at_nr += 1
-        line = "\nATOM  " + str(at_nr).rjust(5) + " " + a.center(4) + " " + r + "  " + str(at_nr).rjust(4) + "    " + str(round(chain[i, 0] * DIST, 3)).rjust(8) + str(round(chain[i, 1] * DIST, 3)).rjust(8) + str(round(chain[i, 2] * DIST, 3)).rjust(8) + "  0.00 00.00"
-        f.write(line)
+        f.write(pdb_line(at_nr, r, chain[i]))
+
+    def neighborhood(pos, type_to_search, size = 2):
+        res = []
+        for i in range(-size, size + 1):
+            for j in range(-size, size + 1):
+                for k in range(-size, size + 1):
+                    p = pos + numpy.array([i, j, k])
+                    if state[tuple(p)] == type_to_search:
+                        res.append(p)
+        return res
+
+    highlighted_lamins = []
+    for pos in attached_to_lamins:
+        # find lamins nearby
+        neigh = neighborhood(pos, LAMIN)
+        # if they are not in the list, add them
+        for nei in neigh:
+            if not tuple(nei) in highlighted_lamins:
+                highlighted_lamins.append(tuple(nei))
 
     chain_at = at_nr
+
     for i in range(n):
         at_nr += 1
-        a="O"
         r = "BIN"
-        line = "\nATOM  " + str(at_nr).rjust(5) + " " + a.center(4) + " " + r + "  " + str(at_nr).rjust(4) + "    " + str(round(binders[i, 0] * DIST, 3)).rjust(8) + str(round(binders[i, 1] * DIST, 3)).rjust(8) + str(round(binders[i, 2] * DIST, 3)).rjust(8) + "  0.00 00.00"
-        f.write(line)
+        f.write(pdb_line(at_nr, r, binders[i]))
+
+    for hl in highlighted_lamins:
+        at_nr += 1
+        r = "HLA" 
+        f.write(pdb_line(at_nr, r, hl))
 
     for i in range(1, chain_at - 1):
         line = "\nCONECT" + str(i).rjust(5) +  str(i + 1).rjust(5)
@@ -262,11 +291,6 @@ DELTA=2
 def metropolis(chain, binders, attached_to_lamins, state, fn, name = "chromosome", n = 100):
 
     E = bonds(chain, state)
-    traj = [(chain, binders, E)]
-
-    f = open(fn, "w")
-    write_as_pbd(chain, binders, f, name + ";frame=" + str(len(traj)) + ";bonds=" + str(E))
-    f.close()
 
     for step in range(n):
 
@@ -283,9 +307,9 @@ def metropolis(chain, binders, attached_to_lamins, state, fn, name = "chromosome
                     Enew = E + count_bonds(ch[i], [BINDER], state) - count_bonds(old, [BINDER], state)
                 elif state[tuple(old)] == BSITE_L:
                     Enew = E + count_bonds(ch[i], [LAMIN, BINDER], state) - count_bonds(old, [LAMIN, BINDER], state)
-                    if ch[i] not in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
+                    if tuple(ch[i]) not in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
                         attached_to_lamins.append(ch[i])
-                    if ch[i] in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) == 0:
+                    if tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) == 0:
                         attached_to_lamins.remove(ch[i])
 
                 else: # REGDNA
@@ -306,7 +330,7 @@ def metropolis(chain, binders, attached_to_lamins, state, fn, name = "chromosome
                 E = Enew
                 f=open(fn, "a")
                 print "iter", step, "energy:", E, "accepted:", len(traj)
-                write_as_pdb(chain, binders, f, name + ";frame=" + str(len(traj)) + ";bonds=" + str(E))
+                write_as_pdb(chain, binders, attached_to_lamins, state, f, name + ";frame=" + str(len(traj)) + ";bonds=" + str(E))
                 f.close()
 
             chain = ch
@@ -314,11 +338,11 @@ def metropolis(chain, binders, attached_to_lamins, state, fn, name = "chromosome
             if resp:
                 state[tuple(old + move)] = state[tuple(old)]
                 state[tuple(old)] = EMPTY
-            
+
     # dump the last state to the pickle
     l_obj = [ch, b, attached_to_lamins, state]
     fn = fn.split('.pdb')[0] + ".pick"
-    file = open (fn, 'w')
+    file = open(fn, 'w')
     pickle.dump(l_obj, file)
     return traj
 
