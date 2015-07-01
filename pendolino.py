@@ -288,9 +288,12 @@ def count_bonds(pos, accepted, state):
     return bonds
 
 DELTA=2
-def metropolis(chain, binders, attached_to_lamins, state, fn, name = "chromosome", n = 100):
+def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
+
+    out_file = open(out_fname, "w")
 
     E = bonds(chain, state)
+    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
 
     for step in range(n):
 
@@ -323,28 +326,25 @@ def metropolis(chain, binders, attached_to_lamins, state, fn, name = "chromosome
 
         if Enew > E or random.uniform(0.0, 1.0) < math.exp((Enew - E) * DELTA): #accept
 
-            if E != Enew:
-
-                traj.append((ch, b, Enew))
-
-                E = Enew
-                f=open(fn, "a")
-                print "iter", step, "energy:", E, "accepted:", len(traj)
-                write_as_pdb(chain, binders, attached_to_lamins, state, f, name + ";frame=" + str(len(traj)) + ";bonds=" + str(E))
-                f.close()
-
             chain = ch
             binders = b
             if resp:
                 state[tuple(old + move)] = state[tuple(old)]
                 state[tuple(old)] = EMPTY
 
+            if E != Enew:
+
+                E = Enew
+                print "iter", step, "energy:", E
+                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
+
     # dump the last state to the pickle
     l_obj = [ch, b, attached_to_lamins, state]
-    fn = fn.split('.pdb')[0] + ".pick"
-    file = open(fn, 'w')
-    pickle.dump(l_obj, file)
-    return traj
+    pickle_fname = out_fname.split('.pdb')[0] + ".pick"
+    pickle_file = open(pickle_fname, 'w')
+    pickle.dump(l_obj, pickle_file)
+
+    out_file.close()
 
 opts = pars_inp()
 
@@ -372,7 +372,7 @@ t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND = numpy.max(c)
 
-t = metropolis(c, b, a, state, fn, n = opts.Steps)
+metropolis(c, b, a, state, fn, n = opts.Steps)
 t1 = t2
 t2 = time.time()
 print "metropolis: ", t2 - t1
