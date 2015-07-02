@@ -51,7 +51,7 @@ def pars_inp():
 			
     (opts, args) = optparser.parse_args()
 
-    if len(args) < 2:
+    if len(args) < 2 and opts.In_str =='':
         print optparser.format_help() #prints help if no arguments
         sys.exit(1)
     return opts	
@@ -293,6 +293,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
     out_file = open(out_fname, "w")
 
     E = bonds(chain, state)
+    print "Starting energy:", E
     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
 
     for step in range(n):
@@ -324,7 +325,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         else:
             Enew = E
 
-        if Enew > E or random.uniform(0.0, 1.0) < math.exp((Enew - E) * DELTA): #accept
+        if Enew >= E or random.uniform(0.0, 1.0) < math.exp((Enew - E) * DELTA): #accept
 
             chain = ch
             binders = b
