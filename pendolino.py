@@ -93,7 +93,7 @@ def getStateWithLamins(bound, f):
                     state[x, y, z] = LAMIN
                     if border == 1:
                         #print border
-                        line = "\nATOM  " + str(at_nr).rjust(5) + " " + "O".center(4) + " " + "LAM" + "  " + str(at_nr).rjust(4) + "    " + str(round(x * DIST, 3)).rjust(8) + str(round(y * DIST, 3)).rjust(8) + str(round(z * DIST, 3)).rjust(8) + "  0.00 00.00"
+                        line = "\nATOM  " + str(at_nr).rjust(5) + " " + "P".center(4) + " " + "LAM" + "  " + str(at_nr).rjust(4) + "    " + str(round(x * DIST, 3)).rjust(8) + str(round(y * DIST, 3)).rjust(8) + str(round(z * DIST, 3)).rjust(8) + "  0.00 00.00"
                         at_nr += 1
                         save_lam.write(line)
                     
@@ -227,10 +227,11 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, name = "chromosom
     f.write("HEADER %d\nTITLE %s" % (l + n, name))
     at_nr = 0
 
-    def pdb_line(at_nr, desc, pos):
-        return "\nATOM  " + str(at_nr).rjust(5) + " " + "C".center(4) + " " + desc + "  " + str(at_nr).rjust(4) + "    " + str(round(pos[0] * DIST, 3)).rjust(8) + str(round(pos[1] * DIST, 3)).rjust(8) + str(round(pos[2] * DIST, 3)).rjust(8) + "  0.00 00.00"
+    def pdb_line(at_name, at_nr, desc, pos):
+        return "\nATOM  " + str(at_nr).rjust(5) + " " + at_name.center(4) + " " + desc + "  " + str(at_nr).rjust(4) + "    " + str(round(pos[0] * DIST, 3)).rjust(8) + str(round(pos[1] * DIST, 3)).rjust(8) + str(round(pos[2] * DIST, 3)).rjust(8) + "  0.00 00.00"
 
     for i in range(l):
+        at_n = 'C'
         cur_chain = chain[i]
         if state[tuple(cur_chain)] == REGDNA:
             r = "UNB"
@@ -242,7 +243,7 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, name = "chromosom
             else:
                 r = "NLA"
         at_nr += 1
-        f.write(pdb_line(at_nr, r, chain[i]))
+        f.write(pdb_line(at_n, at_nr, r, chain[i]))
 
     def neighborhood(pos, type_to_search, size = 2):
         res = []
@@ -268,12 +269,14 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, name = "chromosom
     for i in range(n):
         at_nr += 1
         r = "BIN"
-        f.write(pdb_line(at_nr, r, binders[i]))
+        at_n = 'O'
+        f.write(pdb_line(at_n, at_nr, r, binders[i]))
 
     for hl in highlighted_lamins:
         at_nr += 1
         r = "HLA" 
-        f.write(pdb_line(at_nr, r, hl))
+        at_n = 'P'
+        f.write(pdb_line(at_n, at_nr, r, hl))
 
     for i in range(1, chain_at - 1):
         line = "\nCONECT" + str(i).rjust(5) +  str(i + 1).rjust(5)
