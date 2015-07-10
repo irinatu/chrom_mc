@@ -26,7 +26,7 @@ GOOD_NEIGH = 3
 
 def pars_inp():
     ## read/validate command-line arguments
-    optparser = optparse.OptionParser(usage = "%prog regular_dsites.txt lamin_bsites.txt [<options>]")
+    optparser = optparse.OptionParser(usage = "%prog regular_bsites.txt lamin_bsites.txt [<options>]")
 
     optparser.add_option('-p', type = "string",
         dest = "Out_str",
@@ -340,12 +340,25 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
 
     # dump the last state to the pickle
-    l_obj = [ch, b, attached_to_lamins, state]
+    l_obj = [chain, binders, attached_to_lamins, state]
     pickle_fname = out_fname.split('.pdb')[0] + ".pick"
     pickle_file = open(pickle_fname, 'w')
     pickle.dump(l_obj, pickle_file)
 
     out_file.close()
+
+
+def output_name(ou, m, n):
+    if ou == '':
+        f_n = "MC_traj_%ibin_%ichain.pdb" % (m, n)
+    elif "." in ou:
+        f_n = ou.split('.')[0] + ".pdb"
+    else:
+        f_n = ou + ".pdb"
+    return f_n
+
+
+
 
 opts = pars_inp()
 
@@ -354,21 +367,20 @@ if opts.In_str == '':
 else: 
     rand_init = False
 
-N = opts.Ch_lenght # length of the chain
-M = opts.Binders # nr of binders
-
-if opts.Out_str == '':
-    fn = "MC_traj_%ibin_%ichain.pdb" % (M, N)
-elif "." in opts.Out_str:
-    fn = opts.Out_str.split('.')[0] + ".pdb"
-else:
-    fn = opts.Out_str + ".pdb"
 
 t1 = time.time()
 if rand_init: 
+    N = opts.Ch_lenght # length of the chain
+    M = opts.Binders # nr of binders
+    fn = output_name(opts.Out_str, M, N)
     c, b, a, state = initialize_random(N, M, fn)
 else: 
     c, b, a, state = initialize_import(opts.In_str)
+    N = c.shape[0]
+    M = b.shape[0]
+    fn = output_name(opts.Out_str, M, N)
+
+
 t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND = numpy.max(c)
