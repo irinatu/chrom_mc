@@ -290,7 +290,18 @@ def count_bonds(pos, accepted, state):
              bonds += 1
     return bonds
 
+def radius_gyr(chai):
+    lenth = chai.shape[0]
+    med = lenth/2
+    r = 0.0
+    for at in chai:
+         r = r + math.sqrt((at[0] - chai[med][0])**2 + (at[1] - chai[med][1])**2 + (at[2] - chai[med][2])**2)
+    r_gyr = r/lenth
+    return r_gyr
+
+
 DELTA=2
+GYRATION = True
 def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
 
     out_file = open(out_fname, "w")
@@ -332,6 +343,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
             chain = ch
             binders = b
+
             if resp:
                 state[tuple(old + move)] = state[tuple(old)]
                 state[tuple(old)] = EMPTY
@@ -339,7 +351,11 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
             if E != Enew:
 
                 E = Enew
-                print "iter", step, "energy:", E
+                if GYRATION:
+                     print "iter", step, "energy:", E, "R_gyr ", radius_gyr(chain)
+                else:
+                    print "iter", step, "energy:", E
+                
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
 
     # dump the last state to the pickle
