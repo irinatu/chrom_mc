@@ -7,7 +7,7 @@ MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1
 BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 
 # radius of the nucleus
-R = 100
+R = 50
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
 random.seed(1)
@@ -73,6 +73,9 @@ def initialize_import(f):
     state = list_ob[3]
     return ch, b, a, state
 
+def dist_from_mi(x, y, z, mi):
+        return math.sqrt((x - mi)**2 + (y - mi)**2 + (z - mi)**2)
+
 def getStateWithLamins(bound, f):
 
     state = numpy.zeros((bound, bound, bound), dtype = numpy.int)
@@ -82,13 +85,12 @@ def getStateWithLamins(bound, f):
     save_lam.write("HEADER LAMINA")
     at_nr = 1
 
-    def dist(x, y, z):
-        return math.sqrt((x - MIDDLE)**2 + (y - MIDDLE)**2 + (z - MIDDLE)**2)
+    
 
     for x in range(BOUND):
         for y in range(BOUND):
             for z in range(BOUND):
-                border = abs(dist(x, y, z) - MIDDLE + 1)
+                border = abs(dist_from_mi(x, y, z, MIDDLE) - MIDDLE + 1)
                 if border <= 2:
                     state[x, y, z] = LAMIN
                     if border == 1:
@@ -141,16 +143,33 @@ def initialize_random(n, m, fa, bound = BOUND):
             attached_to_lamins.append(tuple(chain[i]))
 
         cur = chain[i]
-
+        
+    mid = bound/2
     for i in range(m):
-        cur = chain[i * n / m]
-        mov = 2 * random.choice(MOVES)
+        x = random.randint(0, bound)
+        y = random.randint(0, bound)
+        z = random.randint(0, bound)
         tries = 0
-        while tries < 100 and not (no_collisions(tuple(cur + mov), state)):
-            mov = 2 * random.choice(MOVES)
+        distance = dist_from_mi(x, y, z, mid)
+        while distance > mid-3 or (not (no_collisions((x, y, z), state)) and tries < 100):
+            x = random.randint(0, bound)
+            y = random.randint(0, bound)
+            z = random.randint(0, bound)
             tries += 1
-        binders[i] = cur + mov
+            distance = dist_from_mi(x, y, z, mid)
+        binders[i] = [x, y, z]
         state[tuple(binders[i])] = BINDER
+    
+    
+    #for i in range(m):
+    #    cur = chain[i * n / m]
+    #    mov = 2 * random.choice(MOVES)
+    #    tries = 0
+    #    while tries < 100 and not (no_collisions(tuple(cur + mov), state)):
+    #        mov = 2 * random.choice(MOVES)
+    #        tries += 1
+    #    binders[i] = cur + mov
+    #    state[tuple(binders[i])] = BINDER
 
     return chain, binders, attached_to_lamins, state
 
