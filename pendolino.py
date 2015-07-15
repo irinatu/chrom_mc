@@ -4,7 +4,8 @@ import random as random
 #accepted move vectors
 MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1,0,1], [0,1,1], [1,1,0], [-1,0,-1], [0,-1,-1], [-1,-1,0], [1,0,-1], [0,1,-1], [1,-1,0], [-1,0,1], [0,-1,1], [-1,1,0], [-1,1,-1], [-1,-1,-1], [1,1,1], [1,-1,1], [1,-1,-1], [-1,-1,1], [-1,1,1], [1,1,-1]])
 #accepted matching positions of binding sites
-BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
+#BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
+BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
 R = 50
@@ -211,12 +212,15 @@ def bonds(chain, state):
             binding = [BINDER]
         elif molecule == BSITE_L:
             binding = [LAMIN, BINDER]
-
+        
+        one_ch_at = 0
         for bmove in BMOVES: 
             new = molecule_pos + bmove
             enc = state[tuple(new)]
             if enc in binding:
-                bonds += 1 
+                bonds += 1
+                one_ch_at +=1
+                if one_ch_at > 6: break # one atom can have only 6 binding partners 
 
     return bonds
 
@@ -307,6 +311,7 @@ def count_bonds(pos, accepted, state):
     for bmove in BMOVES:
         if state[tuple(pos + bmove)] in accepted:
              bonds += 1
+             if bonds > 6: break
     return bonds
 
 def radius_gyr(chai):
