@@ -115,14 +115,17 @@ def initialize_random(n, m, fa, bound = BOUND):
     def get_site_type_list(fpath, length):
         positions = [0] * length
         for l in open(fpath):
-            positions[int(l)] = 1
+            positions[int(l) -1] = 1
         return positions
 
     regular_bsites = get_site_type_list(sys.argv[1], n)
     lamin_bsites   = get_site_type_list(sys.argv[2], n)
 
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
-        if regular_bsites[i] == 1:
+        if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
+            print "The lamin site are the same as regular! Please change it and rerun the program"
+            sys.exit(1)
+        elif regular_bsites[i] == 1
             return BSITE_R
         elif lamin_bsites[i] == 1:
             return BSITE_L
@@ -219,7 +222,7 @@ def bonds(chain, state):
             enc = state[tuple(new)]
             if enc in binding:
                 bonds += 1
-                one_ch_at +=1
+                one_ch_at += 1
                 if one_ch_at > 6: break # one atom can have only 6 binding partners 
 
     return bonds
@@ -312,6 +315,7 @@ def count_bonds(pos, accepted, state):
         if state[tuple(pos + bmove)] in accepted:
              bonds += 1
              if bonds > 6: break
+    print bonds
     return bonds
 
 def radius_gyr(chai):
