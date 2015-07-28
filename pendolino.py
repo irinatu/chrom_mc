@@ -4,8 +4,8 @@ import random as random
 #accepted move vectors
 MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1,0,1], [0,1,1], [1,1,0], [-1,0,-1], [0,-1,-1], [-1,-1,0], [1,0,-1], [0,1,-1], [1,-1,0], [-1,0,1], [0,-1,1], [-1,1,0], [-1,1,-1], [-1,-1,-1], [1,1,1], [1,-1,1], [1,-1,-1], [-1,-1,1], [-1,1,1], [1,1,-1]])
 #accepted matching positions of binding sites
-#BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
-BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
+BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
+#BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
 R = 50
@@ -125,11 +125,12 @@ def initialize_random(n, m, fa, bound = BOUND):
         if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
             print "The lamin site are the same as regular! Please change it and rerun the program"
             sys.exit(1)
-        elif regular_bsites[i] == 1
+        elif regular_bsites[i] == 1:
             return BSITE_R
         elif lamin_bsites[i] == 1:
             return BSITE_L
-        return REGDNA
+        else:
+            return REGDNA
 
     cur = chain[0]
     state[tuple(cur)] = get_site_type(0, regular_bsites, lamin_bsites)
@@ -222,8 +223,8 @@ def bonds(chain, state):
             enc = state[tuple(new)]
             if enc in binding:
                 bonds += 1
-                one_ch_at += 1
-                if one_ch_at > 6: break # one atom can have only 6 binding partners 
+                #one_ch_at += 1
+                #if one_ch_at > 6: break # one atom can have only 6 binding partners 
 
     return bonds
 
@@ -314,17 +315,17 @@ def count_bonds(pos, accepted, state):
     for bmove in BMOVES:
         if state[tuple(pos + bmove)] in accepted:
              bonds += 1
-             if bonds > 6: break
-    print bonds
+      #       if bonds > 6: break
+    #print bonds
     return bonds
 
 def radius_gyr(chai):
-    lenth = chai.shape[0]
-    med = lenth/2
+    length = chai.shape[0]
     r = 0.0
-    for at in chai:
-         r = r + math.sqrt((at[0] - chai[med][0])**2 + (at[1] - chai[med][1])**2 + (at[2] - chai[med][2])**2)
-    r_gyr = r/lenth
+    for at in range(length):
+        for ato in range(at):
+            r = r + math.sqrt(numpy.sum((chai[at] - chai[ato])**2))
+    r_gyr = 2*r/(length*(length-1))
     return r_gyr
 
 
@@ -354,8 +355,10 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 elif state[tuple(old)] == BSITE_L:
                     Enew = E + count_bonds(ch[i], [LAMIN, BINDER], state) - count_bonds(old, [LAMIN, BINDER], state)
                     if tuple(ch[i]) not in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
+                        print "NOT i > 0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
                         attached_to_lamins.append(ch[i])
-                    if tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) == 0:
+                    elif tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) == 0:
+                        print "IN i ==0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
                         attached_to_lamins.remove(ch[i])
 
                 else: # REGDNA
