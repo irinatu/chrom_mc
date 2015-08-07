@@ -202,25 +202,27 @@ def no_collisions(x, state):
         return False
     return True
 
-def bonds(chain, state):
+def bonds(chain, stat):
 
     bonds = 0
     for j in range(chain.shape[0]):
         molecule_pos = chain[j]
-        molecule = state[tuple(molecule_pos)]
-
+        molecule = stat[tuple(molecule_pos)]
+        #print j
         if molecule == REGDNA:
             continue
  
-        if molecule == BSITE_R:
+        elif molecule == BSITE_R:
             binding = [BINDER]
         elif molecule == BSITE_L:
             binding = [LAMIN, BINDER]
+        else: print "INNY STAN!!!", j, molecule
+        #print j, molecule
         
         one_ch_at = 0
         for bmove in BMOVES: 
             new = molecule_pos + bmove
-            enc = state[tuple(new)]
+            enc = stat[tuple(new)]
             if enc in binding:
                 bonds += 1
                 #one_ch_at += 1
@@ -265,7 +267,7 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, name = "chromosom
         elif state[tuple(cur_chain)] == BSITE_R:
             r = "BOU"
         else: # BSITE_L
-            print type(tuple(cur_chain)), type(attached_to_lamins), tuple(cur_chain), attached_to_lamins
+            #print type(tuple(cur_chain)), type(attached_to_lamins), tuple(cur_chain), attached_to_lamins
             if tuple(cur_chain) in attached_to_lamins:
                 r = "LAS"
             else:
@@ -332,6 +334,7 @@ def radius_gyr(chai):
 
 DELTA=2
 GYRATION = True
+CHECK_E = False
 def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
 
     out_file = open(out_fname, "w")
@@ -346,20 +349,38 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
         ch = numpy.array(chain, copy = True)
         b = numpy.array(binders, copy = True)
+        if CHECK_E:
+            st = numpy.array(state,copy=True)
+        else: pass
         if resp:
             in_chain, i, move = resp
             if in_chain:
+                #print i, "change"
                 old = numpy.copy(ch[i])
                 ch[i] = ch[i] + move
+                if CHECK_E:
+                    st[tuple(ch[i])] = st[tuple(old)]
+                    st[tuple(old)] = EMPTY
+                else: pass
                 if state[tuple(old)] == BSITE_R:
                     Enew = E + count_bonds(ch[i], [BINDER], state) - count_bonds(old, [BINDER], state)
+                    if CHECK_E:
+                        Eslow = bonds(ch, st)
+                        if Enew != Eslow:
+                            print "R", 'Enew', Enew, 'Eslow', Eslow
+                    else: pass
                 elif state[tuple(old)] == BSITE_L:
                     Enew = E + count_bonds(ch[i], [LAMIN, BINDER], state) - count_bonds(old, [LAMIN, BINDER], state)
+                    if CHECK_E:
+                        Eslow = bonds(ch, st)
+                        if Enew != Eslow: 
+                            print "L", 'Enew', Enew, 'Eslow', Eslow
+                    else: pass
                     if tuple(ch[i]) not in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
-                        print "NOT i > 0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
+                        #print "NOT i > 0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
                         attached_to_lamins.append(tuple(ch[i]))
                     elif tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) == 0:
-                        print "IN i ==0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
+                        #print "IN i ==0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
                         attached_to_lamins.remove(ch[i])
 
                 else: # REGDNA
@@ -367,7 +388,16 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
             else:
                 old = numpy.copy(b[i])
                 b[i] = b[i] + move
-                Enew = E + count_bonds(b[i], [BSITE_R], state) - count_bonds(old, [BSITE_R], state)
+                if CHECK_E:
+                    st[tuple(b[i])] = st[tuple(old)]
+                    st[tuple(old)] = EMPTY
+                else: pass
+                Enew = E + count_bonds(b[i], [BSITE_R, BSITE_L], state) - count_bonds(old, [BSITE_R, BSITE_L], state) 
+                if CHECK_E:
+                    Eslow = bonds(ch, st)
+                    if Enew != Eslow:
+                        print "B", 'Enew', Enew, 'Eslow', Eslow
+                else: pass
         else:
             Enew = E
 
