@@ -377,11 +377,14 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                             print "L", 'Enew', Enew, 'Eslow', Eslow
                     else: pass
                     if tuple(ch[i]) not in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
-                        #print "NOT i > 0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
+                        print "NOT i > 0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state), ch[i]
                         attached_to_lamins.append(tuple(ch[i]))
                     elif tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) == 0:
-                        #print "IN i ==0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
+                        print "IN i ==0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state), ch[i]
                         attached_to_lamins.remove(ch[i])
+                    elif tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
+                        print "JEST, ale ma lamine!", ch[i], count_bonds(ch[i], [LAMIN], state)
+                    else:  print "WYJEATEK ", tuple(ch[i]), attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
 
                 else: # REGDNA
                     Enew = E
@@ -419,6 +422,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     print "iter", step, "energy:", E
                 
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
+                print "WRITE!!!"
 
     # dump the last state to the pickle
     l_obj = [chain, binders, attached_to_lamins, state]
