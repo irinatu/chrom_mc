@@ -249,11 +249,11 @@ def modify(chain, binders, state, bound = BOUND):
     return None
 
 DIST = 3
-def write_as_pdb(chain, binders, attached_to_lamins, state, f, name = "chromosome and binders"):
+def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, name = "chromosome and binders"):
 
     l = chain.shape[0]
     n = binders.shape[0]
-    f.write("HEADER %d\nTITLE %s" % (l + n, name))
+    f.write("HEADER %i %d\nTITLE %s" % (nb, l + n, name))
     at_nr = 0
 
     def pdb_line(at_name, at_nr, desc, pos):
@@ -266,12 +266,13 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, name = "chromosom
             r = "UNB"
         elif state[tuple(cur_chain)] == BSITE_R:
             r = "BOU"
-        else: # BSITE_L
-            #print type(tuple(cur_chain)), type(attached_to_lamins), tuple(cur_chain), attached_to_lamins
-            if tuple(cur_chain) in attached_to_lamins:
-                r = "LAS"
-            else:
-                r = "NLA"
+        else: continue
+        #else: # BSITE_L
+        #    #print type(tuple(cur_chain)), type(attached_to_lamins), tuple(cur_chain), attached_to_lamins
+        #    if tuple(cur_chain) in attached_to_lamins:
+        #        r = "LAS"
+        #    else:
+        #        r = "NLA"
         at_nr += 1
         f.write(pdb_line(at_n, at_nr, r, chain[i]))
 
@@ -338,10 +339,10 @@ CHECK_E = False
 def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
 
     out_file = open(out_fname, "w")
-
+    st_nr = 0
     E = bonds(chain, state)
     print "Starting energy:", E
-    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
+    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
 
     for step in range(n):
 
@@ -382,9 +383,11 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     elif tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) == 0:
                         print "IN i ==0", tuple(ch[i]),  attached_to_lamins, count_bonds(ch[i], [LAMIN], state), ch[i]
                         attached_to_lamins.remove(ch[i])
-                    elif tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
-                        print "JEST, ale ma lamine!", ch[i], count_bonds(ch[i], [LAMIN], state)
-                    else:  print "WYJEATEK ", tuple(ch[i]), attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
+                    #elif tuple(ch[i]) in attached_to_lamins and count_bonds(ch[i], [LAMIN], state) > 0:
+                    #    print "JEST, ale ma lamine!", ch[i], count_bonds(ch[i], [LAMIN], state)
+                    else:
+                        pass 
+                        #print "WYJEATEK ", tuple(ch[i]), attached_to_lamins, count_bonds(ch[i], [LAMIN], state)
 
                 else: # REGDNA
                     Enew = E
@@ -416,13 +419,14 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
             if E != Enew:
 
                 E = Enew
+                st_nr += 1
                 if GYRATION:
-                     print "iter", step, "energy:", E, "R_gyr ", radius_gyr(chain)
+                     print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
                 else:
-                    print "iter", step, "energy:", E
+                    print "iter", step, "step", st_nr, "energy:", E
                 
-                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, name + ";bonds=" + str(E))
-                print "WRITE!!!"
+                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
+                #print "WRITE!!!"
 
     # dump the last state to the pickle
     l_obj = [chain, binders, attached_to_lamins, state]
@@ -470,6 +474,7 @@ t2 = time.time()
 print "initialization: ", t2 - t1
 BOUND = numpy.max(c)
 
+a = []
 metropolis(c, b, a, state, fn, n = opts.Steps)
 t1 = t2
 t2 = time.time()
