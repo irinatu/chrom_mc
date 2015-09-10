@@ -276,24 +276,24 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, name = "chrom
         at_nr += 1
         f.write(pdb_line(at_n, at_nr, r, chain[i]))
 
-    def neighborhood(pos, type_to_search, size = 2):
-        res = []
-        for i in range(-size, size + 1):
-            for j in range(-size, size + 1):
-                for k in range(-size, size + 1):
-                    p = pos + numpy.array([i, j, k])
-                    if state[tuple(p)] == type_to_search:
-                        res.append(p)
-        return res
+    #def neighborhood(pos, type_to_search, size = 2):
+    #    res = []
+    #    for i in range(-size, size + 1):
+    #        for j in range(-size, size + 1):
+    #            for k in range(-size, size + 1):
+    #                p = pos + numpy.array([i, j, k])
+    #                if state[tuple(p)] == type_to_search:
+    #                    res.append(p)
+    #    return res
 
-    highlighted_lamins = []
-    for pos in attached_to_lamins:
-        # find lamins nearby
-        neigh = neighborhood(pos, LAMIN)
-        # if they are not in the list, add them
-        for nei in neigh:
-            if not tuple(nei) in highlighted_lamins:
-                highlighted_lamins.append(tuple(nei))
+    #highlighted_lamins = []
+    #for pos in attached_to_lamins:
+    #    # find lamins nearby
+    #    neigh = neighborhood(pos, LAMIN)
+    #    # if they are not in the list, add them
+    #    for nei in neigh:
+    #        if not tuple(nei) in highlighted_lamins:
+    #            highlighted_lamins.append(tuple(nei))
 
     chain_at = at_nr
 
@@ -303,11 +303,11 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, name = "chrom
         at_n = 'O'
         f.write(pdb_line(at_n, at_nr, r, binders[i]))
 
-    for hl in highlighted_lamins:
-        at_nr += 1
-        r = "HLA" 
-        at_n = 'P'
-        f.write(pdb_line(at_n, at_nr, r, hl))
+    #for hl in highlighted_lamins:
+    #    at_nr += 1
+    #    r = "HLA" 
+    #    at_n = 'P'
+    #    f.write(pdb_line(at_n, at_nr, r, hl))
 
     for i in range(1, chain_at - 1):
         line = "\nCONECT" + str(i).rjust(5) +  str(i + 1).rjust(5)
@@ -469,6 +469,7 @@ else:
     M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
+print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps
 
 t2 = time.time()
 print "initialization: ", t2 - t1
