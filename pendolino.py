@@ -11,7 +11,7 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 R = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
-random.seed(1)
+ran_seed = random.seed(1)
 
 EMPTY = 0
 BINDER = 1
@@ -469,7 +469,7 @@ else:
     M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
-print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps
+print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "random_seed ", ran_seed
 
 t2 = time.time()
 print "initialization: ", t2 - t1
