@@ -6,7 +6,7 @@ import numpy as np
 
 def pars_inp():
     ## read/validate command-line arguments
-    optparser = optparse.OptionParser(usage = "%prog -p structure.pdb [<options>]")
+    optparser = optparse.OptionParser(usage = "%prog  [<options>]")
 
     optparser.add_option('-f', type = "string",
         dest = "First_traj",
@@ -70,7 +70,7 @@ coord_from_traj2 = extract_coord(opts.Second_traj)
 #print len(coord_from_traj1), len(coord_from_traj2)
 
 if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
-    print "ERROR: The polimers lenght in the first and the second trajectories are unequal!!! "
+    print "ERROR: The polimers lenght in the first and the second trajectories are unequal!!! ", coord_from_traj1[0].shape[0], coord_from_traj2[0].shape[0] 
     sys.exit(1)
 else: pol_len = coord_from_traj1[0].shape[0]
  
