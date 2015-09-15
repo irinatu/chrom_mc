@@ -104,7 +104,6 @@ def getStateWithLamins(bound, f):
     return state
 
 def initialize_random(n, m, fa, bound = BOUND):
-
     chain = numpy.zeros((n, 3), dtype = numpy.int)
     binders = numpy.zeros((m, 3), dtype = numpy.int)
     state = getStateWithLamins(bound, fa)
@@ -266,7 +265,8 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, name = "chrom
             r = "UNB"
         elif state[tuple(cur_chain)] == BSITE_R:
             r = "BOU"
-        else: continue
+        else: 
+            r = "LAM" #BSITE_L
         #else: # BSITE_L
         #    #print type(tuple(cur_chain)), type(attached_to_lamins), tuple(cur_chain), attached_to_lamins
         #    if tuple(cur_chain) in attached_to_lamins:
