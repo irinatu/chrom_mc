@@ -11,7 +11,8 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 R = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
-ran_seed = random.seed(1)
+ran_seed = 5
+random.seed(ran_seed)
 
 EMPTY = 0
 BINDER = 1
