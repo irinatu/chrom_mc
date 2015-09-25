@@ -13,6 +13,8 @@ R = 20
 BOUND = 2 * R + 2
 ran_seed = 5
 random.seed(ran_seed)
+ran_seed = random.seed(5)
+print ran_seed
 
 EMPTY = 0
 BINDER = 1
