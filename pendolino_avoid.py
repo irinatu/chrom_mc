@@ -288,9 +288,16 @@ def modify(chain, binders, state, bound = BOUND):
         i = random.randint(0, len(chain) - 1)
         move = random.choice(MOVES)
         new = move + chain[i]
-        if good_neighbors(new, i, chain) and no_collisions(tuple(new), state) and dist(chain[i], new) <= numpy.sqrt(2) and not intersect(chain[i], move, state, chain):  # test i
-            print "Nie przecin", i
-            return True, i, move
+        if good_neighbors(new, i, chain) and no_collisions(tuple(new), state) and not intersect(chain[i], move, state, chain):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
+            if i != len(chain) - 1:
+                if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2):
+                    print "Nie przecin", i
+                    return True, i, move
+            elif dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2):
+                print "Nie przecin", i
+                return True, i, move
+            else:
+                print "Za duza odleglosc", i
         else: print i, "No movement"
     return None
 
