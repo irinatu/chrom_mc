@@ -113,13 +113,13 @@ def dist(r1,r2):
 def cross(cha, po1, po2):
     pier = numpy.where((cha == po1).all(axis=1))
     dru = numpy.where((cha == po2).all(axis=1))
-    print "pir-dru ", len(pier), len(dru), pier, dru, pier[0][0]
+    #print "pir-dru ", len(pier), len(dru), pier, dru, pier[0][0]
     if len(pier) == 1 and len(dru) == 1:
         if pier[0] == dru[0]+1 or pier[0] == dru[0]-1:
-            print 'TRUE cross'
+            #print 'TRUE cross'
             return True
         else:
-            print 'FALSE cross'
+            #print 'FALSE cross'
             return False
     else: print "Two atoms of the chain have the same coordinates. Please check ", po1, po2, pier[0], dru[0]
     
@@ -291,14 +291,17 @@ def modify(chain, binders, state, bound = BOUND):
         if good_neighbors(new, i, chain) and no_collisions(tuple(new), state) and not intersect(chain[i], move, state, chain):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
             if i != len(chain) - 1:
                 if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2):
-                    print "Nie przecin", i
+                    #print "Nie przecin", i
                     return True, i, move
             elif dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2):
-                print "Nie przecin", i
+                #print "Nie przecin", i
                 return True, i, move
             else:
-                print "Za duza odleglosc", i
-        else: print i, "No movement"
+                pass
+                #print "Za duza odleglosc", i
+        else:
+            pass 
+            #print i, "No movement"
     return None
 
 DIST = 3
