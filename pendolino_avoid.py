@@ -12,7 +12,7 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 R = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
-ran_seed = 5
+ran_seed = 1
 random.seed(ran_seed)
 print ran_seed
 
@@ -468,7 +468,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
             chain = ch
             binders = b
-            write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
+            #write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
             if resp:
                 state[tuple(old + move)] = state[tuple(old)]
                 state[tuple(old)] = EMPTY
@@ -482,7 +482,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 else:
                     print "iter", step, "step", st_nr, "energy:", E
                 
-                #write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
+                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
 
     # dump the last state to the pickle
