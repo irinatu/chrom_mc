@@ -9,7 +9,7 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 #BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
-R = 20
+R = 10
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
 ran_seed = 2
@@ -123,29 +123,30 @@ def cross(cha, po1, po2):
             return False
     else: print "Two atoms of the chain have the same coordinates. Please check ", po1, po2, pier[0], dru[0]
     
-def intersect(cu, mo, sta, ch):
-    if  dist(cu, cu + mo) == 1:
+def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
+    if  dist(next, new_p) == 1: 
         return False
-    elif dist(cu, cu + mo) > 1:
-        if mo[0] == 0:
-            pos1 = numpy.array(([cu[0], cu[1], (cu+mo)[2]]))
-            pos2 = numpy.array(([cu[0], (cu+mo)[1], cu[2]]))
+    elif dist(next, new_p) > 1:
+        differ = new_p - next
+        if differ[0] == 0:
+            pos1 = numpy.array(([next[0], next[1], new_p[2]]))
+            pos2 = numpy.array(([next[0], new_p[1], next[2]]))
             if sta[tuple(pos1)] not in [EMPTY, LAMIN, BINDER] and sta[tuple(pos2)] not in [EMPTY, LAMIN, BINDER]:
                 return cross(ch, pos1, pos2)
             else: return False         
-        elif mo[1] == 0:
-            pos1 = numpy.array(([cu[0], cu[1], (cu+mo)[2]]))
-            pos2 = numpy.array(([(cu+mo)[0], cu[1], cu[2]]))
+        elif differ[1] == 0:
+            pos1 = numpy.array(([next[0], next[1], new_p[2]]))
+            pos2 = numpy.array(([new_p[0], next[1], next[2]]))
             if sta[tuple(pos1)] not in [EMPTY, LAMIN, BINDER] and sta[tuple(pos2)] not in [EMPTY, LAMIN, BINDER]:
                 return cross(ch, pos1, pos2)
             else: return False
-        elif mo[2] == 0:
-            pos1 = numpy.array(([cu[0], (cu+mo)[1], cu[2]]))
-            pos2 = numpy.array(([(cu+mo)[0], cu[1], cu[2]]))
+        elif differ[2] == 0:
+            pos1 = numpy.array(([next[0], new_p[1], next[2]]))
+            pos2 = numpy.array(([new_p[0], next[1], next[2]]))
             if sta[tuple(pos1)] not in [EMPTY, LAMIN, BINDER] and sta[tuple(pos2)] not in [EMPTY, LAMIN, BINDER]:
                 return cross(ch, pos1, pos2)
             else: return False
-        else: print mo, "Movement is not on the distance = sqrt(2)"
+        else: print new_p, next, "The distance between these two positions are not = sqrt(2)"
 
 def initialize_random(n, m, fa, bound = BOUND):
     chain = numpy.zeros((n, 3), dtype = numpy.int)
@@ -181,7 +182,7 @@ def initialize_random(n, m, fa, bound = BOUND):
     for i in range(1, n):
         mov = random.choice(MOVES)
         tries = 0
-        while tries < 100 and (not (no_collisions(tuple(cur + mov), state)) or intersect(cur, mov, state, chain)):
+        while tries < 100 and (not (no_collisions(tuple(cur + mov), state)) or intersect(cur, cur+mov, state, chain)):
             mov = random.choice(MOVES)
             tries += 1    
             
@@ -288,14 +289,17 @@ def modify(chain, binders, state, bound = BOUND):
         i = random.randint(0, len(chain) - 1)
         move = random.choice(MOVES)
         new = move + chain[i]
-        if good_neighbors(new, i, chain) and no_collisions(tuple(new), state) and not intersect(chain[i], move, state, chain):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
+        if good_neighbors(new, i, chain) and no_collisions(tuple(new), state):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
             if i != len(chain) - 1:
-                if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2):
+                if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
                     #print "Nie przecin", i
                     return True, i, move
-            elif dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2):
+                else: pass
+                         
+            elif dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain):
                 #print "Nie przecin", i
                 return True, i, move
+                
             else:
                 pass
                 #print "Za duza odleglosc", i
@@ -305,11 +309,11 @@ def modify(chain, binders, state, bound = BOUND):
     return None
 
 DIST = 3
-def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, name = "chromosome and binders"):
+def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, name = "chromosome and binders"):
 
     l = chain.shape[0]
     n = binders.shape[0]
-    f.write("HEADER %i %d\nTITLE %s" % (nb, l + n, name))
+    f.write("HEADER %i %d step %i\nTITLE %s" % (nb, l + n, metr_step, name))
     at_nr = 0
 
     def pdb_line(at_name, at_nr, desc, pos):
@@ -399,7 +403,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
     st_nr = 0
     E = bonds(chain, state)
     print "Starting energy:", E
-    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
+    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
 
     for step in range(n):
 
@@ -482,7 +486,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 else:
                     print "iter", step, "step", st_nr, "energy:", E
                 
-                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, name + ";bonds=" + str(E))
+                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
 
     # dump the last state to the pickle
