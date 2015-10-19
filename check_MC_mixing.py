@@ -50,6 +50,7 @@ def subset_prep(coor_list, mid, pol_l):
         inter_mat = np.zeros((pol_l, pol_l), float)
         for i in range(pol_l):
             for j in range(i, pol_l):
+                #print s, i, j
                 dis = np.sqrt(np.sum((coor_list[s][i] - coor_list[s][j])**2))
                 #print "DISTANCE", dis
                 inter_mat[i,j] = inter_mat[j,i] = dis
@@ -82,11 +83,11 @@ if len(coord_from_traj1) == len(coord_from_traj2):
 elif len(coord_from_traj1) < len(coord_from_traj2): 
     middle = len(coord_from_traj1)/2
 else: middle = len(coord_from_traj2)/2
-incr = middle/2
+incr = (middle/2) -1
 whole = middle*2
 
 #print len(coord_from_traj1), len(coord_from_traj2)
-while middle < whole:
+while middle <= whole:
     subset_1 = subset_prep(coord_from_traj1, middle, pol_len)
     subset_2 = subset_prep(coord_from_traj2, middle, pol_len)
     print pol_len, middle
