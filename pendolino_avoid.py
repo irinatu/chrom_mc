@@ -109,6 +109,9 @@ def getStateWithLamins(bound, f):
 
 def dist(r1,r2):
     return DIST_MATRIX[tuple(abs(r1 - r2))]
+    
+#def distance (p1, p2):
+ #   return numpy.sqrt(numpy.sum((p1-p2)**2))
 
 def cross(cha, po1, po2):
     pier = numpy.where((cha == po1).all(axis=1))
@@ -124,6 +127,7 @@ def cross(cha, po1, po2):
     else: print "Two atoms of the chain have the same coordinates. Please check ", po1, po2, pier[0], dru[0]
     
 def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
+    #print dist(next, new_p), distance(next, new_p)
     if  dist(next, new_p) == 1: 
         return False
     elif dist(next, new_p) > 1:
