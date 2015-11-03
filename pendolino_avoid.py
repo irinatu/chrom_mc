@@ -14,7 +14,7 @@ R = 10
 BOUND = 2 * R + 2
 ran_seed = 2
 random.seed(ran_seed)
-print ran_seed
+#print ran_seed
 
 EMPTY = 0
 BINDER = 1
