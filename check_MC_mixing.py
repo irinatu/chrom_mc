@@ -16,6 +16,10 @@ def pars_inp():
         dest = "Second_traj",
         default = '',
         help = "The second file with trajectory in pdb format")
+    optparser.add_option('-b',
+        dest = "Bound_atm",
+        default = True,
+        help = "Only BOU and LAM atoms will be considered")
 			
     (opts, args) = optparser.parse_args()
 
@@ -26,7 +30,7 @@ def pars_inp():
     return opts	
                  
                  
-def extract_coord(file):
+def extract_coord(file, bound):
     coord_mtx_list = []
     inF = open(file, 'r')
     coord_mtx = []
@@ -37,9 +41,17 @@ def extract_coord(file):
                 coord_mtx_list.append(coord)
                 coord_mtx = []
             else: coord_mtx = []
-        elif line[0:4] == "ATOM" and line[13] == "C":
-            line_sp = line.split()
-            coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
+        elif bound:
+            if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB":
+                line_sp = line.split()
+                coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
+            else: 
+                pass 
+                #print line[17:20], "tak"
+        else:
+            if line[0:4] == "ATOM" and line[13] == "C":
+                line_sp = line.split()
+                coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
     return coord_mtx_list
 
     
@@ -68,8 +80,9 @@ def aver_dist(sub1, sub2):
     
     
 opts = pars_inp()
-coord_from_traj1 = extract_coord(opts.First_traj)
-coord_from_traj2 = extract_coord(opts.Second_traj)
+bound_at = opts.Bound_atm
+coord_from_traj1 = extract_coord(opts.First_traj, bound_at)
+coord_from_traj2 = extract_coord(opts.Second_traj, bound_at)
 #print len(coord_from_traj1), len(coord_from_traj2)
 
 if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
@@ -85,7 +98,7 @@ else: middle = len(coord_from_traj2)/2
 incr = middle/2
 whole = middle*2
 
-#print len(coord_from_traj1), len(coord_from_traj2)
+print len(coord_from_traj1), len(coord_from_traj2)
 while middle < whole:
     subset_1 = subset_prep(coord_from_traj1, middle, pol_len)
     subset_2 = subset_prep(coord_from_traj2, middle, pol_len)
