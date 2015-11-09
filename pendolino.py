@@ -8,7 +8,7 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 #BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
-R = 10
+R = 30
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
 ran_seed = 2
