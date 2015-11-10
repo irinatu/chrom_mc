@@ -2,6 +2,8 @@
 
 import sys, optparse
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def pars_inp():
@@ -100,16 +102,25 @@ incr = middle/2
 whole = middle*2
 
 print len(coord_from_traj1), len(coord_from_traj2)
+l_av1 = []
+l_av12 = []
 while middle < whole:
     subset_1 = subset_prep(coord_from_traj1, middle, pol_len)
     subset_2 = subset_prep(coord_from_traj2, middle, pol_len)
     print pol_len, middle
     av1 = aver_dist(subset_1, subset_1)
     av12 = aver_dist(subset_1, subset_2)
+    l_av1.append(av1)
+    l_av12.append(av12)
     print av1, av12 
     if av12 > av1-av1*0.1 and av12 < av1+av1*0.1:
         print middle, "is enought steps", av1, av12
         break
     else: middle = middle + incr
 
- 
+fig = plt.figure()
+p_one = plt.plot( l_av1, "b-", linewidth =0.5, label="Inside")
+p_two = plt.plot( l_av12, "r-", linewidth =0.5, label="Between")
+plt.legend(bbox_to_anchor=(1.0, 1), loc=2, borderaxespad=0.)
+plt.show()
+fig.savefig(opts.First_traj.split()[0].split('.')[0]+ "_"+opts.Second_traj.split()[0].split('.')[0]+"_dist.png")

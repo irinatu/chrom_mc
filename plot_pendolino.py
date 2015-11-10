@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 #from pylab import *
 
 inp = raw_input("Put pendolino output: ")
