@@ -20,12 +20,12 @@ def pars_inp():
         help = "The second file with trajectory in pdb format")
     optparser.add_option('-b',
         dest = "Bound_atm",
-        default = True,
+        action = 'store_true',
         help = "Only BOU and LAM atoms will be considered")
 			
     (opts, args) = optparser.parse_args()
 
-    print len(sys.argv)
+#    print len(sys.argv)
     if len(sys.argv) < 2:
         print optparser.format_help() #prints help if no arguments
         sys.exit(1)
@@ -98,7 +98,7 @@ if len(coord_from_traj1) == len(coord_from_traj2):
 elif len(coord_from_traj1) < len(coord_from_traj2): 
     middle = len(coord_from_traj1)/2
 else: middle = len(coord_from_traj2)/2
-incr = middle/2
+incr = (middle/2) -1
 whole = middle*2
 
 print len(coord_from_traj1), len(coord_from_traj2)
