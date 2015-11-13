@@ -31,9 +31,12 @@ plt.show()
 #plt.scatter(columns[:,1], columns[:, 2], linewidth = 0.5)
 #plt.show()
 fig.savefig(out+"_energy.png")
-
+fig = plt.figure()
 plt.plot( columns[:, 3], "r--", linewidth =0.5)
 plt.axis([0,len(columns[:, 3]), 0, columns[:, 3].max()])
+dlugosc = len(columns[:, 3])/5
+start_mean = len(columns[:, 3]) - dlugosc
+print np.mean(columns[start_mean:, 3])
 plt.title("Gyration")
 plt.show()
 fig.savefig(out+"_gyrat.png")

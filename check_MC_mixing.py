@@ -21,6 +21,7 @@ def pars_inp():
     optparser.add_option('-b',
         dest = "Bound_atm",
         action = 'store_true',
+        default = False,
         help = "Only BOU and LAM atoms will be considered")
 			
     (opts, args) = optparser.parse_args()
@@ -33,28 +34,30 @@ def pars_inp():
                  
                  
 def extract_coord(files, bound):
+    print files
     coord_mtx_list = []
     for file in files.split():
-		inF = open(file, 'r')
-		coord_mtx = []
-		for line in inF:
-			if "HEADER" in line:
-				if len(coord_mtx) > 0:
-					coord = np.array(coord_mtx)
-					coord_mtx_list.append(coord)
-					coord_mtx = []
-				else: coord_mtx = []
-			elif bound:
-				if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB":
-					line_sp = line.split()
-					coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
-				else: 
-					pass 
-					#print line[17:20], "tak"
-			else:
-				if line[0:4] == "ATOM" and line[13] == "C":
-					line_sp = line.split()
-					coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
+        print file
+        inF = open(file, 'r')
+        coord_mtx = []
+        for line in inF:
+            if "HEADER" in line:
+                if len(coord_mtx) > 0:
+                    coord = np.array(coord_mtx)
+                    coord_mtx_list.append(coord)
+                    coord_mtx = []
+                else: coord_mtx = []
+            elif bound:
+                if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB":
+                    line_sp = line.split()
+                    coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
+                else: 
+                    pass 
+                    #print line[17:20], "tak"
+            else:
+                if line[0:4] == "ATOM" and line[13] == "C":
+                    line_sp = line.split()
+                    coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
     return coord_mtx_list
 
     
@@ -86,7 +89,7 @@ opts = pars_inp()
 bound_at = opts.Bound_atm
 coord_from_traj1 = extract_coord(opts.First_traj, bound_at)
 coord_from_traj2 = extract_coord(opts.Second_traj, bound_at)
-#print len(coord_from_traj1), len(coord_from_traj2)
+print "klatki", len(coord_from_traj1), len(coord_from_traj2)
 
 if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
     print "ERROR: The polimers lenght in the first and the second trajectories are unequal!!! ", coord_from_traj1[0].shape[0], coord_from_traj2[0].shape[0] 
@@ -98,10 +101,11 @@ if len(coord_from_traj1) == len(coord_from_traj2):
 elif len(coord_from_traj1) < len(coord_from_traj2): 
     middle = len(coord_from_traj1)/2
 else: middle = len(coord_from_traj2)/2
-incr = (middle/2) -1
+#incr = (middle/2) -1
+incr = middle/5
 whole = middle*2
 
-print len(coord_from_traj1), len(coord_from_traj2)
+print len(coord_from_traj1[0]), len(coord_from_traj2[0])
 l_av1 = []
 l_av12 = []
 while middle < whole:
