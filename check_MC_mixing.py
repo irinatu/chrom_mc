@@ -125,6 +125,7 @@ while middle < whole:
 fig = plt.figure()
 p_one = plt.plot( l_av1, "b-", linewidth =0.5, label="Inside")
 p_two = plt.plot( l_av12, "r-", linewidth =0.5, label="Between")
+plt.axis([0,len(l_av1), 0, max(l_av12)])
 plt.legend(bbox_to_anchor=(1.0, 1), loc=2, borderaxespad=0.)
 plt.show()
 fig.savefig(opts.First_traj.split()[0].split('.')[0]+ "_"+opts.Second_traj.split()[0].split('.')[0]+"_dist.png")
