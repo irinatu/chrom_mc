@@ -1,5 +1,7 @@
 import sys, optparse
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 #import seaborn as sns
 from matplotlib.colors import LogNorm, SymLogNorm
@@ -55,7 +57,7 @@ def calculate_dist_mtx(coor_m, dis_mtx):
             #print "DISTANCE", dis
             if dis <= DISTANCE * 3.0:
                 dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + dis
-                print i, j, dis
+                #print i, j, dis
             else: 
                 pass
                 #print i,j, dis
@@ -74,7 +76,8 @@ def extract_contacts(files, bou, start, end, step):
             #print line
             if "HEADER" in line:
                 count_str = count_str + step
-                if count_str >=  start:
+                print count_str
+                if count_str >=  start and count_str <= end:
                     if len(coord_mtx) > 0:
                         coord = np.array(coord_mtx)
                         try:
@@ -85,6 +88,9 @@ def extract_contacts(files, bou, start, end, step):
                             inter_mat = calculate_dist_mtx(coord, inter_mat)
                         coord_mtx = []
                     else: coord_mtx = []
+                elif count_str >= end: 
+                    break 
+                else: pass
             elif bou:
                 if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB":
                     line_sp = line.split()
