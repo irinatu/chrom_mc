@@ -104,6 +104,7 @@ else: middle = len(coord_from_traj2)/2
 #incr = (middle/2) -1
 incr = middle/5
 whole = middle*2
+middle = 100000
 
 print len(coord_from_traj1[0]), len(coord_from_traj2[0])
 l_av1 = []

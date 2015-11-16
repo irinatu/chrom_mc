@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 #import seaborn as sns
 from matplotlib.colors import LogNorm, SymLogNorm
 
-DISTANCE = 1.0
+DISTANCE = 5.0
 
 def pars_inp():
     ## read/validate command-line arguments
@@ -54,9 +54,10 @@ def calculate_dist_mtx(coor_m, dis_mtx):
     for i in range(coor_m.shape[0]):
         for j in range(i, coor_m.shape[0]):
             dis = np.sqrt(np.sum((coor_m[i] - coor_m[j])**2))
+            dis = dis/3.0
             #print "DISTANCE", dis
-            if dis <= DISTANCE * 3.0:
-                dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + dis
+            if dis <= DISTANCE:
+                dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + 1.0/dis
                 #print i, j, dis
             else: 
                 pass
@@ -107,6 +108,7 @@ def extract_contacts(files, bou, start, end, step):
 def plot_hic(mt):
     fig = plt.figure()
     plt.imshow(mt,origin='lower',norm=LogNorm(), interpolation='nearest')
+    plt.colorbar()
     plt.show()
     fig.savefig("HiC.png")
     
