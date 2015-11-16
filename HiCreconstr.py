@@ -102,6 +102,7 @@ def plot_hic(mt):
     fig = plt.figure()
     plt.imshow(mt,origin='lower',norm=LogNorm(), interpolation='nearest')
     plt.show()
+    fig.savefig("HiC.png")
     
 opts = pars_inp()
 bound = opts.Bound_atm
