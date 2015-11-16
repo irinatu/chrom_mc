@@ -57,6 +57,7 @@ def calculate_dist_mtx(coor_m, dis_mtx):
             dis = dis/3.0
             #print "DISTANCE", dis
             if dis <= DISTANCE:
+                if dis == 0.0: dis =1.0
                 dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + 1.0/dis
                 #print i, j, dis
             else: 
@@ -67,15 +68,16 @@ def calculate_dist_mtx(coor_m, dis_mtx):
 def extract_contacts(files, bou, start, end, step):
     #print files
     coord_mtx_list = []
+    count_str = 0
 
     for file in files.split():
         print file
-        count_str = 0
         inF = open(file, 'r')
         coord_mtx = []
         for line in inF:
             #print line
             if "HEADER" in line:
+                print line
                 count_str = count_str + step
                 print count_str
                 if count_str >=  start and count_str <= end:
