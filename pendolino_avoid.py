@@ -296,7 +296,7 @@ def modify(chain, binders, state, bound = BOUND):
         if good_neighbors(new, i, chain) and no_collisions(tuple(new), state):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
             if i != len(chain) - 1:
                 if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
-                    #print "Nie przecin", i
+                    #print "Nie przecin", i, chain[i], chain[i+1], chain[i-1] 
                     return True, i, move
                 else: pass
                          
