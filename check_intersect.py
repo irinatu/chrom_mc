@@ -35,6 +35,7 @@ def extract_coord(file):
         elif line[0:4] == "ATOM" and line[13] == "C":
             line_sp = line.split()
             coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
+    inF.close()
     return coord_mtx_list
 
 def distance (p1, p2):
