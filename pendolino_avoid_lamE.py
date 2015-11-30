@@ -383,9 +383,9 @@ def count_bonds(pos, accepted, state):
     bonds = 0
     for bmove in BMOVES:
         if state[tuple(pos + bmove)] in accepted:
-            if state[tuple(pos + bmove)] == LAMIN
+            if state[tuple(pos + bmove)] == LAMIN:
                 bonds += 2
-            else: bounds += 1
+            else: bonds += 1
       #       if bonds > 6: break
     #print bonds
     return bonds
