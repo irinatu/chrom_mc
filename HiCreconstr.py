@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 #import seaborn as sns
 from matplotlib.colors import LogNorm, SymLogNorm
 
-DISTANCE = 15.0
+DISTANCE = 5.0
 
 def pars_inp():
     ## read/validate command-line arguments
@@ -33,7 +33,7 @@ def pars_inp():
     optparser.add_option('-l',
         dest = "End",
         type = "int",
-        default = 5,
+        default = 1000000,
         help = "The last step to make a map")
     optparser.add_option('-t',
         dest = "Step",
@@ -55,23 +55,29 @@ def calculate_dist_mtx(coor_m, dis_mtx):
         for j in range(i, coor_m.shape[0]):
             dis = np.sqrt(np.sum((coor_m[i] - coor_m[j])**2))
             #print "DISTANCE", dis
-            if dis <= DISTANCE * 3.0:
-                dis = dis/3.0
-                if dis == 0.0: 
-                    dis = 1.0 
-                    if i != j: print i,j, dis, coor_m[i], coor_m[j]
-                dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + 1.0/dis
-                #print i, j, dis
-            else: 
-                pass
+          #  if dis <= DISTANCE * 3.0:
+          #      dis = dis/3.0
+          #      if dis == 0.0: 
+          #          dis = 1.0 
+          #          if i != j: print i,j, dis, coor_m[i], coor_m[j]
+          #      dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + 1.0
+          #      #print i, j, dis
+          #  else: 
+          #      pass
                 #print i,j, dis
+            dis = dis/3.0
+            if dis == 0.0: 
+                dis = 1.0 
+                if i != j: print i,j, dis, coor_m[i], coor_m[j]
+            dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + 1.0/dis
+                #print i, j, dis
     return dis_mtx
     
 def extract_contacts(files, bou, start, end, step):
     #print files
     coord_mtx_list = []
     count_str = 0
-    steps = 1
+    steps = start
 
     for file in files.split():
         print file
@@ -86,7 +92,7 @@ def extract_contacts(files, bou, start, end, step):
                 if count_str >=  start and count_str <= end and count_str == steps:
                     COOR = True
                     #print start, end, steps, count_str
-                    print line
+                    print line, steps
                     steps += step
                 elif count_str >= end: 
                     break 
