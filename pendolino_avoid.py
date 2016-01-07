@@ -403,8 +403,16 @@ GYRATION = True
 CHECK_E = False
 def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
 
+    def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state):
+        # dump the last state to the pickle
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state]
+        pickle_fname = p_out.split('.pdb')[0] + ".pick"
+        pickle_file = open(pickle_fname, 'w')
+        pickle.dump(l_obj, pickle_file)
+
     out_file = open(out_fname, "w")
     st_nr = 0
+    pick_step = 50000
     E = bonds(chain, state)
     print "Starting energy:", E
     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
@@ -492,13 +500,11 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
+                if st_nr == pick_step:
+                    pick_step += 50000
+                    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
 
-    # dump the last state to the pickle
-    l_obj = [chain, binders, attached_to_lamins, state]
-    pickle_fname = out_fname.split('.pdb')[0] + ".pick"
-    pickle_file = open(pickle_fname, 'w')
-    pickle.dump(l_obj, pickle_file)
-
+    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state)
     out_file.close()
 
 
