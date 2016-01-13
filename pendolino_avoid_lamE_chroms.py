@@ -106,7 +106,6 @@ def getStateWithLamins(bound, f):
 
 
 def dist(r1,r2):
-    print r1, r2, type(r1)
     return DIST_MATRIX[tuple(abs(r1 - r2))]
     
 #def distance (p1, p2):
@@ -162,7 +161,7 @@ def initialize_random(n, m, fa, bound = BOUND):
     def get_site_type_list(fpath, length_list):
         positions = []
         chrom = -1
-        print length_list
+        #print length_list
         for length in length_list:
             pos = [0] * length
             positions.append(pos)
@@ -177,7 +176,7 @@ def initialize_random(n, m, fa, bound = BOUND):
 
     regular_bsites = get_site_type_list(sys.argv[1], n)
     lamin_bsites   = get_site_type_list(sys.argv[2], n)
-    print regular_bsites
+    #print regular_bsites
     
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
         if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
@@ -189,9 +188,6 @@ def initialize_random(n, m, fa, bound = BOUND):
             return BSITE_L
         else:
             return REGDNA
-
-    
-    
     
     
     def rand_next(cu, st, ch):
@@ -215,10 +211,7 @@ def initialize_random(n, m, fa, bound = BOUND):
         for i in range(1, nu):
             at_nr += 1
             mo = rand_next(cur, state, chain)  
-            
             chain[at_nr] = cur + mo
-            #print at_nr, chain.shape[0]
-            print i
             state[tuple(chain[at_nr])] = get_site_type(i, re, la)
 
             #if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
@@ -256,16 +249,16 @@ def initialize_random(n, m, fa, bound = BOUND):
     return chain, binders, attached_to_lamins, state
 
 
-def good_neighbors(x, i, chain, s_pos_chain):
+def good_neighbors(x, i, chain, s_pos_chain, l_pos_chain):
     #check neighbors (chain)
     if i > 0 and (i not in s_pos_chain):
-        print "CHECK",s_pos_chain, i
+        #print "CHECK",s_pos_chain, i
         d1 = dist(chain[i - 1], x)
         if d1 > 0 and d1 < GOOD_NEIGH:
             pass
         else:
             return False
-    if i < len(chain) - 1:
+    if i not in l_pos_chain:
         d2 = dist(chain[i + 1], x)
         if d2 > 0 and d2 < GOOD_NEIGH:
             pass
@@ -307,9 +300,9 @@ def bonds(chain, stat):
 
     return bonds
 
-def modify(sta_pos_chain, chain, binders, state, bound = BOUND):
+def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
     #move binders
-    la_pos_chain = [s-1 for s in sta_pos_chain]
+    
         
     if random.randint(0, 1):
         i = random.randint(0, len(binders) - 1)
@@ -323,10 +316,10 @@ def modify(sta_pos_chain, chain, binders, state, bound = BOUND):
         i = random.randint(0, len(chain) - 1)
         move = random.choice(MOVES)
         new = move + chain[i]
-        print "modify", i, move, chain[i], new
+        #print "modify", i, move, chain[i], new
 
         
-        if good_neighbors(new, i, chain, sta_pos_chain) and no_collisions(tuple(new), state):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
+        if good_neighbors(new, i, chain, sta_pos_chain, la_pos_chain) and no_collisions(tuple(new), state):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
             if i not in sta_pos_chain and i not in la_pos_chain:
                 if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
                     #print "Nie przecin", i
@@ -334,10 +327,12 @@ def modify(sta_pos_chain, chain, binders, state, bound = BOUND):
                 else: pass
                          
             elif i in la_pos_chain:
+                #print "Last", i, la_pos_chain 
                 if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain):
                 #print "Nie przecin", i
                     return True, i, move
             elif i in sta_pos_chain:
+                #print "FIRST", i, sta_pos_chain
                 if dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
                 #print "Nie przecin", i
                     return True, i, move
@@ -421,7 +416,7 @@ def write_as_pdb(ch_nr, chain, binders, attached_to_lamins, state, f, nb, metr_s
     ind = 0
     sum = ch_nr[ind]
     for i in range(1, chain_at):
-        print i, sum
+        #print i, sum
         if i == sum:
             ind +=1
             sum = sum + ch_nr[ind]
@@ -442,14 +437,26 @@ def count_bonds(pos, accepted, state):
     #print bonds
     return bonds
 
-def radius_gyr(chai):
+def radius_gyr(chai, last_pos):
     length = chai.shape[0]
-    r = 0.0
-    for at in range(length):
-        for ato in range(at):
-            r = r + math.sqrt(numpy.sum((chai[at] - chai[ato])**2))
-    r_gyr = 2*r/(length*(length-1))
-    return r_gyr
+    gyr_chains = []
+    for la in last_pos:
+        r = 0.0
+        ind = last_pos.index(la)
+        if ind == 0:
+            for at in range(la):
+                for ato in range(at, la):
+                    r = r + math.sqrt(numpy.sum((chai[at] - chai[ato])**2))
+            r_gyr = 2*r/(length*(length-1))
+            gyr_chains.append(r_gyr)
+        else:
+            for at in range(last_pos[ind-1],la):
+                for ato in range(at, la):
+                    r = r + math.sqrt(numpy.sum((chai[at] - chai[ato])**2))
+            r_gyr = 2*r/(length*(length-1))
+            gyr_chains.append(r_gyr)
+        
+    return gyr_chains
 
 
 DELTA=2
@@ -462,6 +469,8 @@ def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, n
     for pos in nr_chrom:
         po = po+pos
         start_pos_chain.append(po)
+        
+    last_pos_chain = [s-1 for s in start_pos_chain]
 
     out_file = open(out_fname, "w")
     st_nr = 0
@@ -471,7 +480,7 @@ def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, n
 
     for step in range(n):
 
-        resp = modify(start_pos_chain, chain, binders, state)
+        resp = modify(start_pos_chain, last_pos_chain, chain, binders, state)
 
         ch = numpy.array(chain, copy = True)
         b = numpy.array(binders, copy = True)
@@ -546,7 +555,7 @@ def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, n
                 E = Enew
                 st_nr += 1
                 if GYRATION:
-                     print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
+                     print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain, last_pos_chain)
                 else:
                     print "iter", step, "step", st_nr, "energy:", E
                 
