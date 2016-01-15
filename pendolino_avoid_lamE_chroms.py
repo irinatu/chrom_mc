@@ -7,9 +7,10 @@ MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1
 #accepted matching positions of binding sites
 #BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
+TERMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
-R = 20
+R = 10
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
 ran_seed = 2
@@ -116,7 +117,7 @@ def cross(cha, po1, po2):
     dru = numpy.where((cha == po2).all(axis=1))
     #print "pir-dru ", len(pier), len(dru), pier, dru, pier[0][0]
     if len(pier) == 1 and len(dru) == 1:
-        if pier[0] == dru[0]+1 or pier[0] == dru[0]-1:
+        if pier[0][0] == dru[0][0]+1 or pier[0][0] == dru[0][0]-1:
             #print 'TRUE cross'
             return True
         else:
@@ -155,8 +156,7 @@ def initialize_random(n, m, fa, bound = BOUND):
     binders = numpy.zeros((m, 3), dtype = numpy.int)
     state = getStateWithLamins(bound, fa)
     attached_to_lamins = []
-
-    
+    territor = numpy.zeros_like(state)
 
     def get_site_type_list(fpath, length_list):
         positions = []
@@ -190,34 +190,53 @@ def initialize_random(n, m, fa, bound = BOUND):
             return REGDNA
     
     
-    def rand_next(cu, st, ch):
+    def rand_next(cu, st, ch, terri):
         mov = random.choice(MOVES)
         tries = 0
-        while tries < 100 and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)):
+        while tries < 100  and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)) and (terri[tuple(cu+mov)] != 0):
+        #while tries < 100 and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)):
             mov = random.choice(MOVES)
             tries += 1
+            try:
+                terri[tuple(cu+mov)]
+            except IndexError: 
+                print "Error"
+                mov = random.choice(MOVES)
+            print terri[tuple(cu+mov)], tries
         assert tries != 100, "unable to find initialization"
+        print terri[tuple(cu+mov)], intersect(cu, cu+mov, st, ch), no_collisions(tuple(cu + mov), st)
         return mov
+        
+    def fill_one_terr(one_t, pos):
+        for tm in TERMOVES:
+            try:
+                one_t[tuple(tm+pos)] = 1
+            except IndexError: pass
+        return one_t
     
     at_nr = -1
     cur0 = [bound / 2] * 3
     print get_site_type(0, regular_bsites[0], lamin_bsites[0])
     for nu, re, la in zip(n, regular_bsites, lamin_bsites): 
         at_nr += 1
-        mo = rand_next(cur0, state, chain) 
+        one_terr = numpy.zeros_like(state)
+        mo = rand_next(cur0, state, chain, territor) 
         chain[at_nr] = cur0 + mo
         state[tuple(chain[at_nr])] = get_site_type(0, regular_bsites[0], lamin_bsites[0])
-        cur = chain[at_nr]   
+        fill_one_terr(one_terr, chain[at_nr])
+        cur = chain[at_nr]
+           
         for i in range(1, nu):
             at_nr += 1
-            mo = rand_next(cur, state, chain)  
+            mo = rand_next(cur, state, chain, territor)  
             chain[at_nr] = cur + mo
             state[tuple(chain[at_nr])] = get_site_type(i, re, la)
 
             #if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
              #   attached_to_lamins.append(tuple(chain[i]))
-
+            fill_one_terr(one_terr, chain[at_nr])
             cur = chain[at_nr]
+        territor = territor + one_terr
         
     mid = bound/2
     for i in range(m):
