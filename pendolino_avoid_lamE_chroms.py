@@ -7,10 +7,12 @@ MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1
 #accepted matching positions of binding sites
 #BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
-TERMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
+TERMOVES = numpy.array([[-2, -2, -2], [-2, -2, -1], [-2, -2, 0], [-2, -2, 1], [-2, -2, 2], [-2, -1, -2], [-2, -1, -1], [-2, -1, 0], [-2, -1, 1], [-2, -1, 2], [-2, 0, -2], [-2, 0, -1], [-2, 0, 0], [-2, 0, 1], [-2, 0, 2], [-2, 1, -2], [-2, 1, -1], [-2, 1, 0], [-2, 1, 1], [-2, 1, 2], [-2, 2, -2], [-2, 2, -1], [-2, 2, 0], [-2, 2, 1], [-2, 2, 2], [-1, -2, -2], [-1, -2, -1], [-1, -2, 0], [-1, -2, 1], [-1, -2, 2], [-1, -1, -2], [-1, -1, -1], [-1, -1, 0], [-1, -1, 1], [-1, -1, 2], [-1, 0, -2], [-1, 0, -1], [-1, 0, 0], [-1, 0, 1], [-1, 0, 2], [-1, 1, -2], [-1, 1, -1], [-1, 1, 0], [-1, 1, 1], [-1, 1, 2], [-1, 2, -2], [-1, 2, -1], [-1, 2, 0], [-1, 2, 1], [-1, 2, 2], [0, -2, -2], [0, -2, -1], [0, -2, 0], [0, -2, 1], [0, -2, 2], [0, -1, -2], [0, -1, -1], [0, -1, 0], [0, -1, 1], [0, -1, 2], [0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 1, -2], [0, 1, -1], [0, 1, 0], [0, 1, 1], [0, 1, 2], [0, 2, -2], [0, 2, -1], [0, 2, 0], [0, 2, 1], [0, 2, 2], [1, -2, -2], [1, -2, -1], [1, -2, 0], [1, -2, 1], [1, -2, 2], [1, -1, -2], [1, -1, -1], [1, -1, 0], [1, -1, 1], [1, -1, 2], [1, 0, -2], [1, 0, -1], [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 1, -2], [1, 1, -1], [1, 1, 0], [1, 1, 1], [1, 1, 2], [1, 2, -2], [1, 2, -1], [1, 2, 0], [1, 2, 1], [1, 2, 2], [2, -2, -2], [2, -2, -1], [2, -2, 0], [2, -2, 1], [2, -2, 2], [2, -1, -2], [2, -1, -1], [2, -1, 0], [2, -1, 1], [2, -1, 2], [2, 0, -2], [2, 0, -1], [2, 0, 0], [2, 0, 1], [2, 0, 2], [2, 1, -2], [2, 1, -1], [2, 1, 0], [2, 1, 1], [2, 1, 2], [2, 2, -2], [2, 2, -1], [2, 2, 0], [2, 2, 1], [2, 2, 2]])
+
+#[[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
-R = 10
+R = 40
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
 ran_seed = 2
@@ -127,6 +129,7 @@ def cross(cha, po1, po2):
     
 def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
     #print dist(next, new_p), distance(next, new_p)
+    print "INTER"
     if  dist(next, new_p) == 1: 
         return False
     elif dist(next, new_p) > 1:
@@ -151,26 +154,34 @@ def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
             else: return False
         else: print new_p, next, "The distance between these two positions are not = sqrt(2)"
 
+def no_collisions(x, state):
+    print "COLI", x, state.shape, state[tuple(x)]
+    if state[tuple(x)] != EMPTY:
+        return False
+    else:
+        return True
+
 def initialize_random(n, m, fa, bound = BOUND):
     chain = numpy.zeros((sum(n), 3), dtype = numpy.int)
     binders = numpy.zeros((m, 3), dtype = numpy.int)
     state = getStateWithLamins(bound, fa)
+    #print "STAT", state[:,21,:]
     attached_to_lamins = []
     territor = numpy.zeros_like(state)
 
     def get_site_type_list(fpath, length_list):
         positions = []
         chrom = -1
-        #print length_list
+        print "lent", length_list
         for length in length_list:
             pos = [0] * length
             positions.append(pos)
         for l in open(fpath):
-                if "Chromosom" in l:
+                if "chr" in l:
                     #print "tak", l
                     chrom +=1
                     continue
-                #print l
+                #print l, chrom
                 positions[chrom][int(l) -1] = 1
         return positions
 
@@ -179,22 +190,34 @@ def initialize_random(n, m, fa, bound = BOUND):
     #print regular_bsites
     
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
-        if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
-            print "The lamin site are the same as regular! Please change it and rerun the program"
-            sys.exit(1)
+        #if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
+        #    print "The lamin site are the same as regular! Please change it and rerun the program", i
+        #    sys.exit(1)
+        if lamin_bsites[i] == 1:
+            return BSITE_L
         elif regular_bsites[i] == 1:
             return BSITE_R
-        elif lamin_bsites[i] == 1:
-            return BSITE_L
         else:
             return REGDNA
     
+    def check_gyr(atoms, nr_a, chai):
+        r = 0.0
+        for at in range(atoms-nr_a, atoms+1):
+            for ato in range(at, atoms+1):
+                r = r + math.sqrt(numpy.sum((chai[at] - chai[ato])**2))
+            ch_gyr = 2*r/float(nr_a)
+        return ch_gyr
+            
     
-    def rand_next(cu, st, ch, terri):
+    
+    def rand_next(cu, st, ch, terri, nun, at =1, ii=1):
         mov = random.choice(MOVES)
         tries = 0
-        while tries < 100  and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)) and (terri[tuple(cu+mov)] != 0):
+        #print "dfgf"
+        #while (tries < 100) and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)  or terri[tuple(cu+mov)] != 0 or check_gyr(at, ii, ch)>nun/10.0):
+        while (tries < 100) and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)  or terri[tuple(cu+mov)] != 0):
         #while tries < 100 and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)):
+            #print "TRTRT"
             mov = random.choice(MOVES)
             tries += 1
             try:
@@ -202,9 +225,10 @@ def initialize_random(n, m, fa, bound = BOUND):
             except IndexError: 
                 print "Error"
                 mov = random.choice(MOVES)
-            print terri[tuple(cu+mov)], tries
-        assert tries != 100, "unable to find initialization"
-        print terri[tuple(cu+mov)], intersect(cu, cu+mov, st, ch), no_collisions(tuple(cu + mov), st)
+            print "TRY", terri[tuple(cu+mov)], tries, cu, mov, check_gyr(at, ii, ch), nun
+        #assert tries != 100, "unable to find initialization"
+        #print "TER", terri[tuple(cu+mov)], intersect(cu, cu+mov, st, ch), no_collisions(tuple(cu + mov), st)
+        #print "CHECK_G", check_gyr(at, ii, ch)
         return mov
         
     def fill_one_terr(one_t, pos):
@@ -218,9 +242,13 @@ def initialize_random(n, m, fa, bound = BOUND):
     cur0 = [bound / 2] * 3
     print get_site_type(0, regular_bsites[0], lamin_bsites[0])
     for nu, re, la in zip(n, regular_bsites, lamin_bsites): 
+        print type(cur0)
+        cur0=cur0 + numpy.array([random.randint(-3,3), random.randint(-3,3), random.randint(-3,3)])
         at_nr += 1
         one_terr = numpy.zeros_like(state)
-        mo = rand_next(cur0, state, chain, territor) 
+        print "OLD0", cur0
+        mo = rand_next(cur0, state, chain, territor, nu) 
+        print "MO0", mo, type(mo), type(cur0)
         chain[at_nr] = cur0 + mo
         state[tuple(chain[at_nr])] = get_site_type(0, regular_bsites[0], lamin_bsites[0])
         fill_one_terr(one_terr, chain[at_nr])
@@ -228,7 +256,9 @@ def initialize_random(n, m, fa, bound = BOUND):
            
         for i in range(1, nu):
             at_nr += 1
-            mo = rand_next(cur, state, chain, territor)  
+            print "AT_nr!!!", at_nr, cur, type(cur), state[7,21,2]
+            mo = rand_next(cur, state, chain, territor, nu, at_nr, i) 
+            #print "MO", mo 
             chain[at_nr] = cur + mo
             state[tuple(chain[at_nr])] = get_site_type(i, re, la)
 
@@ -285,11 +315,7 @@ def good_neighbors(x, i, chain, s_pos_chain, l_pos_chain):
             return False
     return True
     
-def no_collisions(x, state):
-    if state[tuple(x)] != EMPTY:
-        return False
-    else:
-        return True
+
 
 def bonds(chain, stat):
 
@@ -327,7 +353,7 @@ def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
         i = random.randint(0, len(binders) - 1)
         move = random.choice(MOVES)
         new = move + binders[i]
-
+        #print "OLD_BIN", binders[i]
         if no_collisions(tuple(new), state):
             return False, i, move
     #move residues
@@ -337,7 +363,7 @@ def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
         new = move + chain[i]
         #print "modify", i, move, chain[i], new
 
-        
+        #print "OLD", chain[i]
         if good_neighbors(new, i, chain, sta_pos_chain, la_pos_chain) and no_collisions(tuple(new), state):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
             if i not in sta_pos_chain and i not in la_pos_chain:
                 if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
