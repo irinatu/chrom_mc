@@ -12,7 +12,7 @@ TERMOVES = numpy.array([[-2, -2, -2], [-2, -2, -1], [-2, -2, 0], [-2, -2, 1], [-
 #[[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
-R = 40
+R = 50
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
 ran_seed = 2
@@ -107,6 +107,25 @@ def getStateWithLamins(bound, f):
     save_lam.close()
     return state
 
+def getTerritories(angles):
+    # angles shoud be in the format [(0,20),(20,70),(70,200), (200,360)]
+    stateT = numpy.zeros((BOUND, BOUND, BOUND), dtype = numpy.int)
+    
+    for katy in angles: 
+        kat0 =  katy[0]
+        kat1 = katy[1]
+
+        for x in range(BOUND):
+            for y in range(BOUND):
+                for z in range(BOUND):
+                    border = dist_from_mi(x-MIDDLE, y-MIDDLE, z-MIDDLE, 0)
+                    if border <= MIDDLE and border!= 0:
+                        kat_tet = math.atan2((y-MIDDLE),(x-MIDDLE))
+                        if  (kat0 < 180 and kat1 < 180 and math.radians(kat0) <= kat_tet < math.radians(kat1)) or (kat0 < 180 and kat1 > 180 and ((math.radians(kat0) <= kat_tet <= math.pi) or (-math.pi < kat_tet < (-math.pi+math.radians(kat1-180))))) or (kat0 > 180 and kat1 > 180 and (-math.pi+math.radians(kat0-180) < kat_tet < -math.pi+math.radians(kat1-180))):
+                            stateT[x, y, z] = angles.index(katy)+1
+
+    return stateT
+
 
 def dist(r1,r2):
     return DIST_MATRIX[tuple(abs(r1 - r2))]
@@ -160,14 +179,49 @@ def no_collisions(x, state):
         return False
     else:
         return True
+        
+def get_angels(at_nr):
+    stos = [round(float(a)/min(at_nr)) for a in at_nr]
+    ang_st = 360./sum(stos)
+    ang = [round(s * ang_st) for s in stos]
+    mi = min(ang)
+    if mi < 15:
+        rest = 15-mi
+        ma = max(ang)
+        ang[ang.index(mi)] = 15
+        ang[ang.index(ma)] = ang[ang.index(ma)] - rest
+    an0 = ang[0]
+    angels = [(0, ang[0])]
+    for an in ang[1:-1]:
+         an1 = an0+an
+         angels.append((an0, an1))
+         an0 = an1
+    angels.append((an0, 360))
+    return angels
+    
+        
+    
 
-def initialize_random(n, m, fa, bound = BOUND):
-    chain = numpy.zeros((sum(n), 3), dtype = numpy.int)
-    binders = numpy.zeros((m, 3), dtype = numpy.int)
-    state = getStateWithLamins(bound, fa)
-    #print "STAT", state[:,21,:]
-    attached_to_lamins = []
-    territor = numpy.zeros_like(state)
+MIDDLE = BOUND / 2
+def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms numbers, m - number of binders, fa - file name of lamins
+    def fibonacci_sphere(samples=1,randomize=True): # distribute points on a sphere from web
+        rnd = 1.
+        if randomize:
+            rnd = random.random() * samples
+        points = []
+        offset = 2./samples
+        increment = math.pi * (3. - math.sqrt(5.));
+        for i in range(samples):
+            y = round(((i * offset) - 1) + (offset / 2))
+            r = math.sqrt(9 - pow(y,2)) # R ~ 3
+            #print "R", r
+            phi = ((i + rnd) % samples) * increment
+            y = y + MIDDLE
+            x = round(math.cos(phi) * r) + MIDDLE
+            z = round(math.sin(phi) * r) + MIDDLE
+            points.append([x,y,z])
+            #print points
+        return points
 
     def get_site_type_list(fpath, length_list):
         positions = []
@@ -184,11 +238,7 @@ def initialize_random(n, m, fa, bound = BOUND):
                 #print l, chrom
                 positions[chrom][int(l) -1] = 1
         return positions
-
-    regular_bsites = get_site_type_list(sys.argv[1], n)
-    lamin_bsites   = get_site_type_list(sys.argv[2], n)
-    #print regular_bsites
-    
+        
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
         #if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
         #    print "The lamin site are the same as regular! Please change it and rerun the program", i
@@ -205,17 +255,19 @@ def initialize_random(n, m, fa, bound = BOUND):
         for at in range(atoms-nr_a, atoms+1):
             for ato in range(at, atoms+1):
                 r = r + math.sqrt(numpy.sum((chai[at] - chai[ato])**2))
-            ch_gyr = 2*r/float(nr_a)
+                #print at, ato, r, chai[at], chai[ato], (chai[at] - chai[ato])**2,numpy.sum((chai[at] - chai[ato])**2) 
+        ch_gyr = 2*r/float(nr_a)
+        #print "NUMERY", atoms-nr_a, atoms+1, nr_a, ch_gyr
         return ch_gyr
-            
-    
-    
-    def rand_next(cu, st, ch, terri, nun, at =1, ii=1):
+        
+    def rand_next(cu, st, ch, terri, nun, ti, at =1, ii=1):
         mov = random.choice(MOVES)
         tries = 0
         #print "dfgf"
-        #while (tries < 100) and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)  or terri[tuple(cu+mov)] != 0 or check_gyr(at, ii, ch)>nun/10.0):
-        while (tries < 100) and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)  or terri[tuple(cu+mov)] != 0):
+        ch_cop = numpy.copy(ch)
+        ch_cop[at]=cu+mov
+        #while (tries < 100) and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)  or terri[tuple(cu+mov)] != 0 or check_gyr(at, ii, ch_cop)>nun/5.):
+        while (tries < 100) and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)  or terri[tuple(cu+mov)] != ti):
         #while tries < 100 and (not (no_collisions(tuple(cu + mov), st)) or intersect(cu, cu+mov, st, ch)):
             #print "TRTRT"
             mov = random.choice(MOVES)
@@ -225,8 +277,9 @@ def initialize_random(n, m, fa, bound = BOUND):
             except IndexError: 
                 print "Error"
                 mov = random.choice(MOVES)
-            print "TRY", terri[tuple(cu+mov)], tries, cu, mov, check_gyr(at, ii, ch), nun
-        #assert tries != 100, "unable to find initialization"
+            ch_cop[at]=cu+mov
+            print "TRY", terri[tuple(cu+mov)], tries, cu, mov, ti, terri[tuple(cu+mov)], nun
+        assert tries != 100, "unable to find initialization"
         #print "TER", terri[tuple(cu+mov)], intersect(cu, cu+mov, st, ch), no_collisions(tuple(cu + mov), st)
         #print "CHECK_G", check_gyr(at, ii, ch)
         return mov
@@ -238,35 +291,75 @@ def initialize_random(n, m, fa, bound = BOUND):
             except IndexError: pass
         return one_t
     
+    chain = numpy.zeros((sum(n), 3), dtype = numpy.int)
+    binders = numpy.zeros((m, 3), dtype = numpy.int)
+    state = getStateWithLamins(bound, fa)
+    ter_ang = get_angels(n)
+    territor = getTerritories(ter_ang) # state with territories for each chain defined as number form 1 to len(n)
+    
+    attached_to_lamins = []
+    for x in range(bound):
+        for y in range(bound):
+            for z in range(bound):
+                dist_m = dist_from_mi(x, y, z, MIDDLE)
+                if dist_m <= 3:
+                    territor[x, y, z] = 0
+    
+    
+
+    regular_bsites = get_site_type_list(sys.argv[1], n)
+    lamin_bsites   = get_site_type_list(sys.argv[2], n)
+    #print regular_bsites  
+    
+    
     at_nr = -1
-    cur0 = [bound / 2] * 3
+    
+    #points_on_sph = fibonacci_sphere(60)
     print get_site_type(0, regular_bsites[0], lamin_bsites[0])
     for nu, re, la in zip(n, regular_bsites, lamin_bsites): 
-        print type(cur0)
-        cur0=cur0 + numpy.array([random.randint(-3,3), random.randint(-3,3), random.randint(-3,3)])
+        cur0 = [bound / 2] * 3
+        te = n.index(nu)+1
+     #   for cu in points_on_sph:
+     #       print cu, tuple(numpy.array(cu))
+     #       if territor[tuple(numpy.array(cu))] == te:
+     #           cur0 = cu
+     #           break
+        if cur0 == [MIDDLE,MIDDLE,MIDDLE]:
+            ter_point = numpy.where(territor == te)
+            po_dis_min = 20.0
+            for px, py, pz in zip(ter_point[0], ter_point[1], ter_point[2]):
+                po_dis = dist_from_mi(px, py, pz, MIDDLE)
+                if po_dis_min > po_dis:
+                    po_dis_min = po_dis
+                    cur0 = [px,py,pz]
+        #print type(cur0)
+        #cur0=cur0 + numpy.array([random.randint(-3,3), random.randint(-3,3), random.randint(-3,3)])
         at_nr += 1
-        one_terr = numpy.zeros_like(state)
-        print "OLD0", cur0
-        mo = rand_next(cur0, state, chain, territor, nu) 
-        print "MO0", mo, type(mo), type(cur0)
-        chain[at_nr] = cur0 + mo
+        #one_terr = numpy.zeros_like(state)
+        #print "OLD0", cur0
+        #mo = rand_next(cur0, state, chain, territor, nu) 
+        #print "MO0", mo, type(mo), type(cur0), at_nr
+        #chain[at_nr] = cur0 + mo
+        chain[at_nr] = numpy.array(cur0)
+        print chain[0], chain[at_nr]
         state[tuple(chain[at_nr])] = get_site_type(0, regular_bsites[0], lamin_bsites[0])
-        fill_one_terr(one_terr, chain[at_nr])
+        #fill_one_terr(one_terr, chain[at_nr])
         cur = chain[at_nr]
            
         for i in range(1, nu):
             at_nr += 1
             print "AT_nr!!!", at_nr, cur, type(cur), state[7,21,2]
-            mo = rand_next(cur, state, chain, territor, nu, at_nr, i) 
+            mo = rand_next(cur, state, chain, territor, nu, te, at_nr, i) 
             #print "MO", mo 
             chain[at_nr] = cur + mo
+            print at_nr, chain[at_nr]
             state[tuple(chain[at_nr])] = get_site_type(i, re, la)
 
             #if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
              #   attached_to_lamins.append(tuple(chain[i]))
-            fill_one_terr(one_terr, chain[at_nr])
+            #fill_one_terr(one_terr, chain[at_nr])
             cur = chain[at_nr]
-        territor = territor + one_terr
+        #territor = territor + one_terr
         
     mid = bound/2
     for i in range(m):
@@ -313,8 +406,7 @@ def good_neighbors(x, i, chain, s_pos_chain, l_pos_chain):
             pass
         else:
             return False
-    return True
-    
+    return True   
 
 
 def bonds(chain, stat):
