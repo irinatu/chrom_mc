@@ -7,16 +7,16 @@ MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1
 #accepted matching positions of binding sites
 #BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
-TERMOVES = numpy.array([[-2, -2, -2], [-2, -2, -1], [-2, -2, 0], [-2, -2, 1], [-2, -2, 2], [-2, -1, -2], [-2, -1, -1], [-2, -1, 0], [-2, -1, 1], [-2, -1, 2], [-2, 0, -2], [-2, 0, -1], [-2, 0, 0], [-2, 0, 1], [-2, 0, 2], [-2, 1, -2], [-2, 1, -1], [-2, 1, 0], [-2, 1, 1], [-2, 1, 2], [-2, 2, -2], [-2, 2, -1], [-2, 2, 0], [-2, 2, 1], [-2, 2, 2], [-1, -2, -2], [-1, -2, -1], [-1, -2, 0], [-1, -2, 1], [-1, -2, 2], [-1, -1, -2], [-1, -1, -1], [-1, -1, 0], [-1, -1, 1], [-1, -1, 2], [-1, 0, -2], [-1, 0, -1], [-1, 0, 0], [-1, 0, 1], [-1, 0, 2], [-1, 1, -2], [-1, 1, -1], [-1, 1, 0], [-1, 1, 1], [-1, 1, 2], [-1, 2, -2], [-1, 2, -1], [-1, 2, 0], [-1, 2, 1], [-1, 2, 2], [0, -2, -2], [0, -2, -1], [0, -2, 0], [0, -2, 1], [0, -2, 2], [0, -1, -2], [0, -1, -1], [0, -1, 0], [0, -1, 1], [0, -1, 2], [0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 1, -2], [0, 1, -1], [0, 1, 0], [0, 1, 1], [0, 1, 2], [0, 2, -2], [0, 2, -1], [0, 2, 0], [0, 2, 1], [0, 2, 2], [1, -2, -2], [1, -2, -1], [1, -2, 0], [1, -2, 1], [1, -2, 2], [1, -1, -2], [1, -1, -1], [1, -1, 0], [1, -1, 1], [1, -1, 2], [1, 0, -2], [1, 0, -1], [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 1, -2], [1, 1, -1], [1, 1, 0], [1, 1, 1], [1, 1, 2], [1, 2, -2], [1, 2, -1], [1, 2, 0], [1, 2, 1], [1, 2, 2], [2, -2, -2], [2, -2, -1], [2, -2, 0], [2, -2, 1], [2, -2, 2], [2, -1, -2], [2, -1, -1], [2, -1, 0], [2, -1, 1], [2, -1, 2], [2, 0, -2], [2, 0, -1], [2, 0, 0], [2, 0, 1], [2, 0, 2], [2, 1, -2], [2, 1, -1], [2, 1, 0], [2, 1, 1], [2, 1, 2], [2, 2, -2], [2, 2, -1], [2, 2, 0], [2, 2, 1], [2, 2, 2]])
+#TERMOVES = numpy.array([[-2, -2, -2], [-2, -2, -1], [-2, -2, 0], [-2, -2, 1], [-2, -2, 2], [-2, -1, -2], [-2, -1, -1], [-2, -1, 0], [-2, -1, 1], [-2, -1, 2], [-2, 0, -2], [-2, 0, -1], [-2, 0, 0], [-2, 0, 1], [-2, 0, 2], [-2, 1, -2], [-2, 1, -1], [-2, 1, 0], [-2, 1, 1], [-2, 1, 2], [-2, 2, -2], [-2, 2, -1], [-2, 2, 0], [-2, 2, 1], [-2, 2, 2], [-1, -2, -2], [-1, -2, -1], [-1, -2, 0], [-1, -2, 1], [-1, -2, 2], [-1, -1, -2], [-1, -1, -1], [-1, -1, 0], [-1, -1, 1], [-1, -1, 2], [-1, 0, -2], [-1, 0, -1], [-1, 0, 0], [-1, 0, 1], [-1, 0, 2], [-1, 1, -2], [-1, 1, -1], [-1, 1, 0], [-1, 1, 1], [-1, 1, 2], [-1, 2, -2], [-1, 2, -1], [-1, 2, 0], [-1, 2, 1], [-1, 2, 2], [0, -2, -2], [0, -2, -1], [0, -2, 0], [0, -2, 1], [0, -2, 2], [0, -1, -2], [0, -1, -1], [0, -1, 0], [0, -1, 1], [0, -1, 2], [0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 1, -2], [0, 1, -1], [0, 1, 0], [0, 1, 1], [0, 1, 2], [0, 2, -2], [0, 2, -1], [0, 2, 0], [0, 2, 1], [0, 2, 2], [1, -2, -2], [1, -2, -1], [1, -2, 0], [1, -2, 1], [1, -2, 2], [1, -1, -2], [1, -1, -1], [1, -1, 0], [1, -1, 1], [1, -1, 2], [1, 0, -2], [1, 0, -1], [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 1, -2], [1, 1, -1], [1, 1, 0], [1, 1, 1], [1, 1, 2], [1, 2, -2], [1, 2, -1], [1, 2, 0], [1, 2, 1], [1, 2, 2], [2, -2, -2], [2, -2, -1], [2, -2, 0], [2, -2, 1], [2, -2, 2], [2, -1, -2], [2, -1, -1], [2, -1, 0], [2, -1, 1], [2, -1, 2], [2, 0, -2], [2, 0, -1], [2, 0, 0], [2, 0, 1], [2, 0, 2], [2, 1, -2], [2, 1, -1], [2, 1, 0], [2, 1, 1], [2, 1, 2], [2, 2, -2], [2, 2, -1], [2, 2, 0], [2, 2, 1], [2, 2, 2]])
 
-#[[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
+TERMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
-R = 50
+R = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
-ran_seed = 2
-random.seed(ran_seed)
+#ran_seed = 5
+#random.seed(ran_seed)
 #print ran_seed
 
 EMPTY = 0
@@ -111,6 +111,14 @@ def getTerritories(angles):
     # angles shoud be in the format [(0,20),(20,70),(70,200), (200,360)]
     stateT = numpy.zeros((BOUND, BOUND, BOUND), dtype = numpy.int)
     
+    radius_cut = round(MIDDLE/5.0)
+    start = 0.
+    radius_cut_list = []
+    for ra in range(5):
+        start = start+radius_cut
+        radius_cut_list.append(start)
+        
+    
     for katy in angles: 
         kat0 =  katy[0]
         kat1 = katy[1]
@@ -122,7 +130,12 @@ def getTerritories(angles):
                     if border <= MIDDLE and border!= 0:
                         kat_tet = math.atan2((y-MIDDLE),(x-MIDDLE))
                         if  (kat0 < 180 and kat1 < 180 and math.radians(kat0) <= kat_tet < math.radians(kat1)) or (kat0 < 180 and kat1 > 180 and ((math.radians(kat0) <= kat_tet <= math.pi) or (-math.pi < kat_tet < (-math.pi+math.radians(kat1-180))))) or (kat0 > 180 and kat1 > 180 and (-math.pi+math.radians(kat0-180) < kat_tet < -math.pi+math.radians(kat1-180))):
-                            stateT[x, y, z] = angles.index(katy)+1
+                            bor = dist_from_mi(x-MIDDLE, y-MIDDLE, MIDDLE-MIDDLE, 0)
+                            if 0. <= bor < radius_cut_list[0] : stateT[x, y, z] = angles.index(katy)+1
+                            elif radius_cut_list[0] <= bor < radius_cut_list[1]: stateT[x, y, z] = str(angles.index(katy)+1) + '1'
+                            elif radius_cut_list[1] <= bor < radius_cut_list[2]: stateT[x, y, z] = str(angles.index(katy)+1) + '2'
+                            elif radius_cut_list[2] <= bor < radius_cut_list[3]: stateT[x, y, z] = str(angles.index(katy)+1) + '3'
+                            elif radius_cut_list[3] <= bor < MIDDLE: stateT[x, y, z] = str(angles.index(katy)+1) + '4'
 
     return stateT
 
@@ -136,7 +149,7 @@ def dist(r1,r2):
 def cross(cha, po1, po2):
     pier = numpy.where((cha == po1).all(axis=1))
     dru = numpy.where((cha == po2).all(axis=1))
-    #print "pir-dru ", len(pier), len(dru), pier, dru, pier[0][0]
+    #print "pir-dru ", po1, po2, len(pier), len(dru), pier, dru, pier[0][0]
     if len(pier) == 1 and len(dru) == 1:
         if pier[0][0] == dru[0][0]+1 or pier[0][0] == dru[0][0]-1:
             #print 'TRUE cross'
@@ -148,7 +161,7 @@ def cross(cha, po1, po2):
     
 def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
     #print dist(next, new_p), distance(next, new_p)
-    print "INTER"
+    #print "INTER"
     if  dist(next, new_p) == 1: 
         return False
     elif dist(next, new_p) > 1:
@@ -174,7 +187,7 @@ def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
         else: print new_p, next, "The distance between these two positions are not = sqrt(2)"
 
 def no_collisions(x, state):
-    print "COLI", x, state.shape, state[tuple(x)]
+    #print "COLI", x, state.shape, state[tuple(x)]
     if state[tuple(x)] != EMPTY:
         return False
     else:
@@ -226,7 +239,7 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
     def get_site_type_list(fpath, length_list):
         positions = []
         chrom = -1
-        print "lent", length_list
+        #print "lent", length_list
         for length in length_list:
             pos = [0] * length
             positions.append(pos)
@@ -278,16 +291,20 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
                 print "Error"
                 mov = random.choice(MOVES)
             ch_cop[at]=cu+mov
-            print "TRY", terri[tuple(cu+mov)], tries, cu, mov, ti, terri[tuple(cu+mov)], nun
-        assert tries != 100, "unable to find initialization"
+            #print terri[tuple(cu+mov)]
+            #print "TRY", terri[tuple(cu+mov)], tries, cu, mov, ti, terri[tuple(cu+mov)], nun
+        #assert tries != 100, "unable to find initialization"
+        if tries == 100: 
+            return mov, True
         #print "TER", terri[tuple(cu+mov)], intersect(cu, cu+mov, st, ch), no_collisions(tuple(cu + mov), st)
         #print "CHECK_G", check_gyr(at, ii, ch)
-        return mov
+        return mov, False
         
-    def fill_one_terr(one_t, pos):
+    def fill_one_terr(one_t, pos, t):
         for tm in TERMOVES:
             try:
-                one_t[tuple(tm+pos)] = 1
+                if one_t[tuple(tm+pos)] == t:
+                    one_t[tuple(tm+pos)] = 0
             except IndexError: pass
         return one_t
     
@@ -316,7 +333,8 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
     
     #points_on_sph = fibonacci_sphere(60)
     print get_site_type(0, regular_bsites[0], lamin_bsites[0])
-    for nu, re, la in zip(n, regular_bsites, lamin_bsites): 
+    for nu, re, la in zip(n, regular_bsites, lamin_bsites):
+         
         cur0 = [bound / 2] * 3
         te = n.index(nu)+1
      #   for cu in points_on_sph:
@@ -326,14 +344,13 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
      #           break
         if cur0 == [MIDDLE,MIDDLE,MIDDLE]:
             ter_point = numpy.where(territor == te)
-            po_dis_min = 20.0
+            po_dis_min = 20.0 # big enough to find smaller dis - closest to the middle
             for px, py, pz in zip(ter_point[0], ter_point[1], ter_point[2]):
                 po_dis = dist_from_mi(px, py, pz, MIDDLE)
                 if po_dis_min > po_dis:
                     po_dis_min = po_dis
                     cur0 = [px,py,pz]
-        #print type(cur0)
-        #cur0=cur0 + numpy.array([random.randint(-3,3), random.randint(-3,3), random.randint(-3,3)])
+        
         at_nr += 1
         #one_terr = numpy.zeros_like(state)
         #print "OLD0", cur0
@@ -345,20 +362,73 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
         state[tuple(chain[at_nr])] = get_site_type(0, regular_bsites[0], lamin_bsites[0])
         #fill_one_terr(one_terr, chain[at_nr])
         cur = chain[at_nr]
-           
-        for i in range(1, nu):
-            at_nr += 1
-            print "AT_nr!!!", at_nr, cur, type(cur), state[7,21,2]
-            mo = rand_next(cur, state, chain, territor, nu, te, at_nr, i) 
-            #print "MO", mo 
-            chain[at_nr] = cur + mo
-            print at_nr, chain[at_nr]
-            state[tuple(chain[at_nr])] = get_site_type(i, re, la)
+        print at_nr, chain[at_nr], nu
+        
+        ter_zero = numpy.where(territor == te)
+        ter_one = numpy.where(territor == int(str(te) + '1'))
+        ter_two = numpy.where(territor == int(str(te) + '2'))
+        ter_three = numpy.where(territor == int(str(te) + '3'))
+        ter_four = numpy.where(territor == int(str(te) + '4'))
+        state_lam = numpy.where(state == LAMIN)
+        try_chain = 0 
+        succ = False  
+        while try_chain < 100 and not succ:
+            print try_chain, succ
+            for i in range(1, nu):
+                chain_l_dev = round(nu/125.)
+                at_nr += 1
+                if chain_l_dev <= i < chain_l_dev * 10. and len(numpy.where(territor == int(str(te) + '1'))[0]) != 0:
+                    print "ZMIENIAM", str(te) + '1'
+                    open_part = numpy.where(territor == int(str(te) + '1'))
+                    territor[open_part]= te
+                elif chain_l_dev * 10. <= i < chain_l_dev * 30. and len(numpy.where(territor == int(str(te) + '2'))[0]) != 0:
+                    print "ZMIENIAM", str(te) + '2'
+                    open_part = numpy.where(territor == int(str(te) + '2'))
+                    territor[open_part]= te
+                elif chain_l_dev * 30. <= i < chain_l_dev * 70. and len(numpy.where(territor == int(str(te) + '3'))[0]) != 0:
+                    print "ZMIENIAM", str(te) + '3'
+                    open_part = numpy.where(territor == int(str(te) + '3'))
+                    territor[open_part]= te
+                elif chain_l_dev * 70. <= i < chain_l_dev * 125. and len(numpy.where(territor == int(str(te) + '4'))[0]) != 0:
+                    print "ZMIENIAM", str(te) + '4'
+                    open_part = numpy.where(territor == int(str(te) + '4'))
+                    territor[open_part]= te 
+            
+                #print "AT_nr!!!", at_nr, i,  cur, type(cur)
+                mo, tang = rand_next(cur, state, chain, territor, nu, te, at_nr, i)
+                if tang:
+                    try_chain +=1
+                    assert try_chain != 100, "Chain is not possible to initialize"
+                    at_nr = at_nr - i
+                    old_state0 = state[tuple(chain[at_nr])]
+                    territor[ter_zero]= te
+                    state[ter_zero] = 0.
+                    territor[ter_one]= int(str(te) + '1')
+                    state[ter_one] = 0.
+                    territor[ter_two]= int(str(te) + '2')
+                    state[ter_two] = 0.
+                    territor[ter_three]= int(str(te) + '3')
+                    state[ter_three] = 0.
+                    territor[ter_four]= int(str(te) + '4')
+                    state[ter_four] = 0.
+                    state[tuple(chain[at_nr])] = old_state0
+                    state[state_lam] = LAMIN
+                    cur = numpy.array(cur0)
+                    print "Start one more time", try_chain, cur, at_nr
+                    break
+                #print "MO", mo 
+                chain[at_nr] = cur + mo
+                print at_nr, chain[at_nr], nu, i, te
+                state[tuple(chain[at_nr])] = get_site_type(i, re, la)
 
-            #if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
-             #   attached_to_lamins.append(tuple(chain[i]))
-            #fill_one_terr(one_terr, chain[at_nr])
-            cur = chain[at_nr]
+                #if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
+                 #   attached_to_lamins.append(tuple(chain[i]))
+                #if i > 50: # remove entaglement in the small nucleus
+                #    fill_one_terr(territor, chain[at_nr-100], te)
+                cur = chain[at_nr]
+                if i == nu-1: # the last residue of the chain, so no need to remodelling the chain
+                    #print "TRUE" 
+                    succ = True
         #territor = territor + one_terr
         
     mid = bound/2
@@ -597,7 +667,7 @@ def radius_gyr(chai, last_pos):
 
 
 DELTA=2
-GYRATION = True
+GYRATION = False
 CHECK_E = False
 def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
     
@@ -739,7 +809,7 @@ else:
     M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
-print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "random_seed ", ran_seed
+print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "random_seed ", #ran_seed
 
 t2 = time.time()
 print "initialization: ", t2 - t1
