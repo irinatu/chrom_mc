@@ -69,7 +69,7 @@ def calculate_dist_mtx(coor_m, dis_mtx):
             if dis == 0.0: 
                 dis = 1.0 
                 if i != j: print i,j, dis, coor_m[i], coor_m[j]
-            dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + 1.0/dis
+            dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[j,i] + 1.0/dis # contact calculation
                 #print i, j, dis
     return dis_mtx
     
