@@ -2,6 +2,8 @@
 
 import sys, optparse
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -117,16 +119,18 @@ while middle < whole:
     av12 = aver_dist(subset_1, subset_2)
     l_av1.append(av1)
     l_av12.append(av12)
-    print av1, av12 
+    per = (av12-av1)*100.0/av1 
+    print av1, av12, per, '%'
     if av12 > av1-av1*0.1 and av12 < av1+av1*0.1:
         print middle, "is enought steps", av1, av12
         break
-    else: middle = middle + incr
+    else:
+        middle = middle + incr
 
 fig = plt.figure()
 p_one = plt.plot( l_av1, "b-", linewidth =0.5, label="Inside")
 p_two = plt.plot( l_av12, "r-", linewidth =0.5, label="Between")
 plt.axis([0,len(l_av1), 0, max(l_av12)])
 plt.legend(bbox_to_anchor=(1.0, 1), loc=2, borderaxespad=0.)
-plt.show()
+#plt.show()
 fig.savefig(opts.First_traj.split()[0].split('.')[0]+ "_"+opts.Second_traj.split()[0].split('.')[0]+"_dist.png")

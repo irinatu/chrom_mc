@@ -131,12 +131,13 @@ def plot_hic(mt):
     fig = plt.figure()
     plt.imshow(mt,origin='lower',norm=LogNorm(), interpolation='nearest')
     plt.colorbar()
-    plt.show()
+    #plt.show()
 
     fig.savefig("HiC.png")
     
 opts = pars_inp()
 bound = opts.Bound_atm
 interactions = extract_contacts(opts.First_traj, bound, opts.Start, opts.End, opts.Step )
+np.save("HiC.npy", interactions)
 plot_hic(interactions)
 
