@@ -25,6 +25,10 @@ def pars_inp():
         action = 'store_true',
         default = False,
         help = "Only BOU and LAM atoms will be considered")
+    optparser.add_option('-c', type = "string",
+        dest = "Chain",
+        default = '',
+        help = "The chain for mixing point")
 			
     (opts, args) = optparser.parse_args()
 
@@ -35,7 +39,7 @@ def pars_inp():
     return opts	
                  
                  
-def extract_coord(files, bound):
+def extract_coord(files, bound, ch):
     print files
     coord_mtx_list = []
     for file in files.split():
@@ -50,16 +54,18 @@ def extract_coord(files, bound):
                     coord_mtx = []
                 else: coord_mtx = []
             elif bound:
-                if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB":
+                #print line[21], ch, line
+                if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB" and line[21] == ch:
                     line_sp = line.split()
                     coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
                 else: 
                     pass 
                     #print line[17:20], "tak"
             else:
-                if line[0:4] == "ATOM" and line[13] == "C":
+                if line[0:4] == "ATOM" and line[13] == "C" and line[21] == ch:
                     line_sp = line.split()
                     coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
+        #print len(coord_mtx)
     return coord_mtx_list
 
     
@@ -89,8 +95,8 @@ def aver_dist(sub1, sub2):
     
 opts = pars_inp()
 bound_at = opts.Bound_atm
-coord_from_traj1 = extract_coord(opts.First_traj, bound_at)
-coord_from_traj2 = extract_coord(opts.Second_traj, bound_at)
+coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain)
+coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain)
 print "klatki", len(coord_from_traj1), len(coord_from_traj2)
 
 if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
@@ -106,7 +112,7 @@ else: middle = len(coord_from_traj2)/2
 #incr = (middle/2) -1
 incr = middle/5
 whole = middle*2
-middle = 100000
+#middle = 100000
 
 print len(coord_from_traj1[0]), len(coord_from_traj2[0])
 l_av1 = []
@@ -114,7 +120,7 @@ l_av12 = []
 while middle < whole:
     subset_1 = subset_prep(coord_from_traj1, middle, pol_len)
     subset_2 = subset_prep(coord_from_traj2, middle, pol_len)
-    print pol_len, middle
+    print pol_len, middle, len(subset_1), len(subset_2)
     av1 = aver_dist(subset_1, subset_1)
     av12 = aver_dist(subset_1, subset_2)
     l_av1.append(av1)

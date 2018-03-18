@@ -51,6 +51,10 @@ def pars_inp():
         dest = "Ch_lenght",
         default = 512,
         help = "Lenght of the chains, separated by comma (two chains: 234, 456) (default one chain with 512 bins lenght)")
+    optparser.add_option('-r', type = "string",
+        dest = "Revers",
+        default = 1058,
+        help = "Lenght of the chains, where tail should be near the center (2R, 3R), separated by comma (two chains: 234, 456) (default one chain with 512 bins lenght)")
     optparser.add_option('-b', type = "int",
         dest = "Binders",
         default = 256,
@@ -74,11 +78,14 @@ DIST_MATRIX = init_dist_matrix()
 
 def initialize_import(f):
     list_ob = pickle.load(open(f))
+    print len(list_ob)
     ch = list_ob[0]
     b = list_ob[1]
     a = list_ob[2]
     state = list_ob[3]
-    return ch, b, a, state
+    ch_n = list_ob[4]
+    re = list_ob[5]
+    return ch, b, a, state, ch_n, re
 
 def dist_from_mi(x, y, z, mi):
         return math.sqrt((x - mi)**2 + (y - mi)**2 + (z - mi)**2)
@@ -216,7 +223,7 @@ def get_angels(at_nr):
     
 
 MIDDLE = BOUND / 2
-def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms numbers, m - number of binders, fa - file name of lamins
+def initialize_random(n, m, fa, rever, bound = BOUND): # n - list with chains atoms numbers, m - number of binders, fa - file name of lamins
     def fibonacci_sphere(samples=1,randomize=True): # distribute points on a sphere from web
         rnd = 1.
         if randomize:
@@ -253,9 +260,6 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
         return positions
         
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
-        #if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
-        #    print "The lamin site are the same as regular! Please change it and rerun the program", i
-        #    sys.exit(1)
         if lamin_bsites[i] == 1:
             return BSITE_L
         elif regular_bsites[i] == 1:
@@ -291,13 +295,8 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
                 print "Error"
                 mov = random.choice(MOVES)
             ch_cop[at]=cu+mov
-            #print terri[tuple(cu+mov)]
-            #print "TRY", terri[tuple(cu+mov)], tries, cu, mov, ti, terri[tuple(cu+mov)], nun
-        #assert tries != 100, "unable to find initialization"
         if tries == 100: 
             return mov, True
-        #print "TER", terri[tuple(cu+mov)], intersect(cu, cu+mov, st, ch), no_collisions(tuple(cu + mov), st)
-        #print "CHECK_G", check_gyr(at, ii, ch)
         return mov, False
         
     def fill_one_terr(one_t, pos, t):
@@ -320,8 +319,7 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
             for z in range(bound):
                 dist_m = dist_from_mi(x, y, z, MIDDLE)
                 if dist_m <= 3:
-                    territor[x, y, z] = 0
-    
+                    territor[x, y, z] = 0   
     
 
     regular_bsites = get_site_type_list(sys.argv[1], n)
@@ -332,16 +330,11 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
     at_nr = -1
     
     #points_on_sph = fibonacci_sphere(60)
-    print get_site_type(0, regular_bsites[0], lamin_bsites[0])
+    #print get_site_type(0, regular_bsites[0], lamin_bsites[0])
     for nu, re, la in zip(n, regular_bsites, lamin_bsites):
          
         cur0 = [bound / 2] * 3
         te = n.index(nu)+1
-     #   for cu in points_on_sph:
-     #       print cu, tuple(numpy.array(cu))
-     #       if territor[tuple(numpy.array(cu))] == te:
-     #           cur0 = cu
-     #           break
         if cur0 == [MIDDLE,MIDDLE,MIDDLE]:
             ter_point = numpy.where(territor == te)
             po_dis_min = 20.0 # big enough to find smaller dis - closest to the middle
@@ -352,15 +345,12 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
                     cur0 = [px,py,pz]
         
         at_nr += 1
-        #one_terr = numpy.zeros_like(state)
-        #print "OLD0", cur0
-        #mo = rand_next(cur0, state, chain, territor, nu) 
-        #print "MO0", mo, type(mo), type(cur0), at_nr
-        #chain[at_nr] = cur0 + mo
         chain[at_nr] = numpy.array(cur0)
         print chain[0], chain[at_nr]
-        state[tuple(chain[at_nr])] = get_site_type(0, regular_bsites[0], lamin_bsites[0])
-        #fill_one_terr(one_terr, chain[at_nr])
+        if nu not in rever:
+            state[tuple(chain[at_nr])] = get_site_type(0, re, la)
+        else:
+            state[tuple(chain[at_nr])] = get_site_type(-1, re, la)
         cur = chain[at_nr]
         print at_nr, chain[at_nr], nu
         
@@ -372,64 +362,113 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
         state_lam = numpy.where(state == LAMIN)
         try_chain = 0 
         succ = False  
-        while try_chain < 100 and not succ:
-            print try_chain, succ
-            for i in range(1, nu):
-                chain_l_dev = round(nu/125.)
-                at_nr += 1
-                if chain_l_dev <= i < chain_l_dev * 10. and len(numpy.where(territor == int(str(te) + '1'))[0]) != 0:
-                    print "ZMIENIAM", str(te) + '1'
-                    open_part = numpy.where(territor == int(str(te) + '1'))
-                    territor[open_part]= te
-                elif chain_l_dev * 10. <= i < chain_l_dev * 30. and len(numpy.where(territor == int(str(te) + '2'))[0]) != 0:
-                    print "ZMIENIAM", str(te) + '2'
-                    open_part = numpy.where(territor == int(str(te) + '2'))
-                    territor[open_part]= te
-                elif chain_l_dev * 30. <= i < chain_l_dev * 70. and len(numpy.where(territor == int(str(te) + '3'))[0]) != 0:
-                    print "ZMIENIAM", str(te) + '3'
-                    open_part = numpy.where(territor == int(str(te) + '3'))
-                    territor[open_part]= te
-                elif chain_l_dev * 70. <= i < chain_l_dev * 125. and len(numpy.where(territor == int(str(te) + '4'))[0]) != 0:
-                    print "ZMIENIAM", str(te) + '4'
-                    open_part = numpy.where(territor == int(str(te) + '4'))
-                    territor[open_part]= te 
+        
+        if nu not in rever:
+            while try_chain < 100 and not succ:
+                print try_chain, succ
+                for i in range(1, nu):
+                    chain_l_dev = round(nu/125.)
+                    at_nr += 1
+                    if chain_l_dev <= i < chain_l_dev * 10. and len(numpy.where(territor == int(str(te) + '1'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '1'
+                        open_part = numpy.where(territor == int(str(te) + '1'))
+                        territor[open_part]= te
+                    elif chain_l_dev * 10. <= i < chain_l_dev * 30. and len(numpy.where(territor == int(str(te) + '2'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '2'
+                        open_part = numpy.where(territor == int(str(te) + '2'))
+                        territor[open_part]= te
+                    elif chain_l_dev * 30. <= i < chain_l_dev * 70. and len(numpy.where(territor == int(str(te) + '3'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '3'
+                        open_part = numpy.where(territor == int(str(te) + '3'))
+                        territor[open_part]= te
+                    elif chain_l_dev * 70. <= i < chain_l_dev * 125. and len(numpy.where(territor == int(str(te) + '4'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '4'
+                        open_part = numpy.where(territor == int(str(te) + '4'))
+                        territor[open_part]= te 
             
-                #print "AT_nr!!!", at_nr, i,  cur, type(cur)
-                mo, tang = rand_next(cur, state, chain, territor, nu, te, at_nr, i)
-                if tang:
-                    try_chain +=1
-                    assert try_chain != 100, "Chain is not possible to initialize"
-                    at_nr = at_nr - i
-                    old_state0 = state[tuple(chain[at_nr])]
-                    territor[ter_zero]= te
-                    state[ter_zero] = 0.
-                    territor[ter_one]= int(str(te) + '1')
-                    state[ter_one] = 0.
-                    territor[ter_two]= int(str(te) + '2')
-                    state[ter_two] = 0.
-                    territor[ter_three]= int(str(te) + '3')
-                    state[ter_three] = 0.
-                    territor[ter_four]= int(str(te) + '4')
-                    state[ter_four] = 0.
-                    state[tuple(chain[at_nr])] = old_state0
-                    state[state_lam] = LAMIN
-                    cur = numpy.array(cur0)
-                    print "Start one more time", try_chain, cur, at_nr
-                    break
-                #print "MO", mo 
-                chain[at_nr] = cur + mo
-                print at_nr, chain[at_nr], nu, i, te
-                state[tuple(chain[at_nr])] = get_site_type(i, re, la)
+                    #print "AT_nr!!!", at_nr, i,  cur, type(cur)
+                    mo, tang = rand_next(cur, state, chain, territor, nu, te, at_nr, i)
+                    if tang:
+                        try_chain +=1
+                        assert try_chain != 100, "Chain is not possible to initialize"
+                        at_nr = at_nr - i
+                        old_state0 = state[tuple(chain[at_nr])]
+                        territor[ter_zero]= te
+                        state[ter_zero] = 0.
+                        territor[ter_one]= int(str(te) + '1')
+                        state[ter_one] = 0.
+                        territor[ter_two]= int(str(te) + '2')
+                        state[ter_two] = 0.
+                        territor[ter_three]= int(str(te) + '3')
+                        state[ter_three] = 0.
+                        territor[ter_four]= int(str(te) + '4')
+                        state[ter_four] = 0.
+                        state[tuple(chain[at_nr])] = old_state0
+                        state[state_lam] = LAMIN
+                        cur = numpy.array(cur0)
+                        print "Start one more time", try_chain, cur, at_nr
+                        break
+                    #print "MO", mo 
+                    chain[at_nr] = cur + mo
+                    print "Rosne", at_nr, chain[at_nr], nu, i, te
+                    state[tuple(chain[at_nr])] = get_site_type(i, re, la)
 
-                #if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
-                 #   attached_to_lamins.append(tuple(chain[i]))
-                #if i > 50: # remove entaglement in the small nucleus
-                #    fill_one_terr(territor, chain[at_nr-100], te)
-                cur = chain[at_nr]
-                if i == nu-1: # the last residue of the chain, so no need to remodelling the chain
-                    #print "TRUE" 
-                    succ = True
-        #territor = territor + one_terr
+                    cur = chain[at_nr]
+                    if i == nu-1: # the last residue of the chain, so no need to remodelling the chain 
+                        succ = True
+        else:
+            while try_chain < 100 and not succ:
+                print try_chain, succ
+                for i in range(nu-1, 0, -1):
+                    chain_l_dev = round(nu/125.)
+                    at_nr += 1
+                    if chain_l_dev * 70. <= i < chain_l_dev * 125.  and len(numpy.where(territor == int(str(te) + '1'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '1'
+                        open_part = numpy.where(territor == int(str(te) + '1'))
+                        territor[open_part]= te
+                    elif chain_l_dev * 30. <= i < chain_l_dev * 70. and len(numpy.where(territor == int(str(te) + '2'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '2'
+                        open_part = numpy.where(territor == int(str(te) + '2'))
+                        territor[open_part]= te
+                    elif chain_l_dev * 10. <= i < chain_l_dev * 30. and len(numpy.where(territor == int(str(te) + '3'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '3'
+                        open_part = numpy.where(territor == int(str(te) + '3'))
+                        territor[open_part]= te
+                    elif chain_l_dev <= i < chain_l_dev * 10. and len(numpy.where(territor == int(str(te) + '4'))[0]) != 0:
+                        print "ZMIENIAM", str(te) + '4'
+                        open_part = numpy.where(territor == int(str(te) + '4'))
+                        territor[open_part]= te 
+        
+                    #print "AT_nr!!!", at_nr, i,  cur, type(cur)
+                    mo, tang = rand_next(cur, state, chain, territor, nu, te, at_nr, i)
+                    if tang:
+                        try_chain +=1
+                        assert try_chain != 100, "Chain is not possible to initialize"
+                        at_nr = at_nr - nu + i
+                        old_state0 = state[tuple(chain[at_nr])]
+                        territor[ter_zero]= te
+                        state[ter_zero] = 0.
+                        territor[ter_one]= int(str(te) + '1')
+                        state[ter_one] = 0.
+                        territor[ter_two]= int(str(te) + '2')
+                        state[ter_two] = 0.
+                        territor[ter_three]= int(str(te) + '3')
+                        state[ter_three] = 0.
+                        territor[ter_four]= int(str(te) + '4')
+                        state[ter_four] = 0.
+                        state[tuple(chain[at_nr])] = old_state0
+                        state[state_lam] = LAMIN
+                        cur = numpy.array(cur0)
+                        print "Start one more time", try_chain, cur, at_nr
+                        break
+                    #print "MO", mo 
+                    chain[at_nr] = cur + mo
+                    print at_nr, chain[at_nr], nu, i, te
+                    state[tuple(chain[at_nr])] = get_site_type(i-1, re, la)
+
+                    cur = chain[at_nr]
+                    if i == 1: # the last residue of the chain, so no need to remodelling the chain 
+                        succ = True
         
     mid = bound/2
     for i in range(m):
@@ -446,17 +485,6 @@ def initialize_random(n, m, fa, bound = BOUND): # n - list with chains atoms num
             distance = dist_from_mi(x, y, z, mid)
         binders[i] = [x, y, z]
         state[tuple(binders[i])] = BINDER
-    
-    
-    #for i in range(m):
-    #    cur = chain[i * n / m]
-    #    mov = 2 * random.choice(MOVES)
-    #    tries = 0
-    #    while tries < 100 and not (no_collisions(tuple(cur + mov), state)):
-    #        mov = 2 * random.choice(MOVES)
-    #        tries += 1
-    #    binders[i] = cur + mov
-    #    state[tuple(binders[i])] = BINDER
 
     return chain, binders, attached_to_lamins, state
 
@@ -528,19 +556,19 @@ def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
         #print "OLD", chain[i]
         if good_neighbors(new, i, chain, sta_pos_chain, la_pos_chain) and no_collisions(tuple(new), state):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
             if i not in sta_pos_chain and i not in la_pos_chain:
-                if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
+                if dist(chain[abs(i-1)], new) <= numpy.sqrt(2) and dist(chain[i+1], new) <= numpy.sqrt(2) and not intersect(new, chain[abs(i-1)], state, chain) and not intersect(new, chain[i+1], state, chain):
                     #print "Nie przecin", i
                     return True, i, move
                 else: pass
                          
             elif i in la_pos_chain:
                 #print "Last", i, la_pos_chain 
-                if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain):
+                if dist(chain[abs(i-1)], new) <= numpy.sqrt(2) and not intersect(new, chain[abs(i-1)], state, chain):
                 #print "Nie przecin", i
                     return True, i, move
             elif i in sta_pos_chain:
                 #print "FIRST", i, sta_pos_chain
-                if dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
+                if dist(chain[i+1], new) <= numpy.sqrt(2) and not intersect(new, chain[i+1], state, chain):
                 #print "Nie przecin", i
                     return True, i, move
                 
@@ -553,7 +581,7 @@ def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
     return None
 
 DIST = 3
-def write_as_pdb(ch_nr, chain, binders, attached_to_lamins, state, f, nb, metr_step, name = "chromosome and binders"):
+def write_as_pdb(ch_nr, rev, chain, binders, attached_to_lamins, state, f, nb, metr_step, name = "chromosome and binders"):
 
     l = chain.shape[0]
     n = binders.shape[0]
@@ -565,7 +593,9 @@ def write_as_pdb(ch_nr, chain, binders, attached_to_lamins, state, f, nb, metr_s
         
     chain_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "R", "S", "T"]
     for l, ch_n in zip(ch_nr, chain_list):
-        res_nu = 0
+        if l not in rev:
+            res_nu = 0
+        else: res_nu = l+1
         for i in range(l):
             at_n = 'C'
             cur_chain = chain[at_nr]
@@ -575,35 +605,14 @@ def write_as_pdb(ch_nr, chain, binders, attached_to_lamins, state, f, nb, metr_s
                 r = "BOU"
             else: 
                 r = "LAM" #BSITE_L
-            #else: # BSITE_L
-            #    #print type(tuple(cur_chain)), type(attached_to_lamins), tuple(cur_chain), attached_to_lamins
-            #    if tuple(cur_chain) in attached_to_lamins:
-            #        r = "LAS"
-            #    else:
-            #        r = "NLA"
             at_nr += 1
-            res_nu += 1
+            if l not in rev:
+                res_nu += 1
+            else: res_nu -= 1
             f.write(pdb_line(at_n, at_nr, res_nu, r, chain[at_nr-1], ch_n))
         f.write("\nTER")
+            
 
-    #def neighborhood(pos, type_to_search, size = 2):
-    #    res = []
-    #    for i in range(-size, size + 1):
-    #        for j in range(-size, size + 1):
-    #            for k in range(-size, size + 1):
-    #                p = pos + numpy.array([i, j, k])
-    #                if state[tuple(p)] == type_to_search:
-    #                    res.append(p)
-    #    return res
-
-    #highlighted_lamins = []
-    #for pos in attached_to_lamins:
-    #    # find lamins nearby
-    #    neigh = neighborhood(pos, LAMIN)
-    #    # if they are not in the list, add them
-    #    for nei in neigh:
-    #        if not tuple(nei) in highlighted_lamins:
-    #            highlighted_lamins.append(tuple(nei))
 
     chain_at = at_nr
     res_nu = 0
@@ -614,11 +623,6 @@ def write_as_pdb(ch_nr, chain, binders, attached_to_lamins, state, f, nb, metr_s
         at_n = 'O'
         f.write(pdb_line(at_n, at_nr, res_nu, r, binders[i], "0"))
 
-    #for hl in highlighted_lamins:
-    #    at_nr += 1
-    #    r = "HLA" 
-    #    at_n = 'P'
-    #    f.write(pdb_line(at_n, at_nr, r, hl))
  
     ind = 0
     sum = ch_nr[ind]
@@ -669,7 +673,7 @@ def radius_gyr(chai, last_pos):
 DELTA=2
 GYRATION = False
 CHECK_E = False
-def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
+def metropolis(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
     
     start_pos_chain = []
     po = 0
@@ -683,7 +687,7 @@ def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, n
     st_nr = 0
     E = bonds(chain, state)
     print "Starting energy:", E
-    write_as_pdb(nr_chrom, chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
+    write_as_pdb(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
 
     for step in range(n):
 
@@ -766,11 +770,11 @@ def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, n
                 else:
                     print "iter", step, "step", st_nr, "energy:", E
                 
-                write_as_pdb(nr_chrom, chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
+                write_as_pdb(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
 
     # dump the last state to the pickle
-    l_obj = [chain, binders, attached_to_lamins, state]
+    l_obj = [chain, binders, attached_to_lamins, state, nr_chrom, revers]
     pickle_fname = out_fname.split('.pdb')[0] + ".pick"
     pickle_file = open(pickle_fname, 'w')
     pickle.dump(l_obj, pickle_file)
@@ -780,7 +784,10 @@ def metropolis(nr_chrom, chain, binders, attached_to_lamins, state, out_fname, n
 
 def output_name(ou, m, n):
     if ou == '':
-        f_n = "MC_traj_%ibin_%ichain.pdb" % (m, n)
+        if type(m) == list:
+            f_n = "MC_traj_%ibin_%ichain.pdb" % (len(m), len(n))
+        else:
+            f_n = "MC_traj_%ibin_%ichain.pdb" % (m, n)
     elif "." in ou:
         f_n = ou.split('.')[0] + ".pdb"
     else:
@@ -800,12 +807,14 @@ t1 = time.time()
 if rand_init: 
     N = opts.Ch_lenght.split(',') # length of the chains
     N = map(int, N)
+    R = opts.Revers.split(',')
+    R = map(int, R)
     M = opts.Binders # nr of binders
     fn = output_name(opts.Out_str, M, N)
-    c, b, a, state = initialize_random(N, M, fn)
+    c, b, a, state = initialize_random(N, M, fn, R)
 else: 
-    c, b, a, state = initialize_import(opts.In_str)
-    N = c.shape[0]
+    c, b, a, state, N, R = initialize_import(opts.In_str)
+    #N = c.shape[0]
     M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
@@ -816,7 +825,7 @@ print "initialization: ", t2 - t1
 BOUND = numpy.max(c)
 
 a = []
-metropolis(N, c, b, a, state, fn, n = opts.Steps)
+metropolis(N, R, c, b, a, state, fn, n = opts.Steps)
 t1 = t2
 t2 = time.time()
 print "metropolis: ", t2 - t1
