@@ -1,4 +1,4 @@
-#read pdb file and give the contact (Hi-C) matrix
+#read two trajectories written in pdb format and calculate mixing point based on  
 
 import sys, optparse
 import numpy as np
@@ -57,14 +57,14 @@ def extract_coord(files, bound, ch):
                 #print line[21], ch, line
                 if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB" and line[21] == ch:
                     line_sp = line.split()
-                    coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
+                    coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
                 else: 
                     pass 
                     #print line[17:20], "tak"
             else:
                 if line[0:4] == "ATOM" and line[13] == "C" and line[21] == ch:
                     line_sp = line.split()
-                    coord_mtx.append([float(line_sp[6]), float(line_sp[6]), float(line_sp[7])])
+                    coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
         #print len(coord_mtx)
     return coord_mtx_list
 
