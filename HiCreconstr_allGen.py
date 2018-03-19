@@ -51,6 +51,7 @@ def pars_inp():
     return opts	
 
 def calculate_dist_mtx(coor_m, dis_mtx):
+    #print coor_m, dis_mtx
     for i in range(coor_m.shape[0]):
         for j in range(i, coor_m.shape[0]):
             dis = np.sqrt(np.sum((coor_m[i] - coor_m[j])**2))
@@ -82,7 +83,8 @@ def extract_contacts(files, bou, start, end, step):
     for file in files.split():
         print file
         inF = open(file, 'r')
-        coord_mtx = []
+        chains = {}  # dictionary with dist_mtx for each chain {'A':dist_mtx, 'B':dist_mtx...}
+        coord_mtx = [] # list of [x,y,z] for one chain [[x1,y1,z1],[x2,y2,z2]...]
         for line in inF:
             #print line
             if "HEADER" in line:
@@ -97,46 +99,49 @@ def extract_contacts(files, bou, start, end, step):
                 elif count_str >= end: 
                     break 
                 else: coord_mtx = []
-            elif line[0:3] == "END":
+            elif line[0:3] == "TER":
                 if len(coord_mtx) > 0:
                     coord = np.array(coord_mtx)
                     coord_mtx = []
                     #print coord.shape, coord
                     try:
-                        inter_mat
-                        inter_mat = calculate_dist_mtx(coord, inter_mat)
-                    except NameError:
-                        inter_mat = np.zeros((coord.shape[0], coord.shape[0]), float)
-                        inter_mat = calculate_dist_mtx(coord, inter_mat)
+                        chains[chain]
+                        chains[chain] = calculate_dist_mtx(coord, chains[chain])
+                    except KeyError:
+                        chains[chain] = np.zeros((coord.shape[0], coord.shape[0]), float)
+                        chains[chain] = calculate_dist_mtx(coord, chains[chain])
                 else: coord_mtx = []
                 
             elif bou and COOR:
                 #print 'DODAJE'
                 if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB":
-                    line_sp = line.split()
+                    #line_sp = line.split()
+                    chain = line[21]
                     #print line
-                    coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
+                    coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
                 else: 
                     pass 
                     #print line[17:20], "tak"
             elif COOR:
                 #print 'dodaje'
                 if line[0:4] == "ATOM" and line[13] == "C":
+                    chain = line[21]
                     line_sp = line.split()
                     #print line
-                    coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
-    return inter_mat
+                    coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
+    return chains
     
-def plot_hic(mt):
+def plot_hic(mt, cha):
     fig = plt.figure()
     plt.imshow(mt,origin='lower',norm=LogNorm(), interpolation='nearest')
     plt.colorbar()
     plt.show()
 
-    fig.savefig("HiC.png")
+    fig.savefig("HiC_%s.png" %(cha))
     
 opts = pars_inp()
 bound = opts.Bound_atm
-interactions = extract_contacts(opts.First_traj, bound, opts.Start, opts.End, opts.Step )
-plot_hic(interactions)
+interactions_for_chains = extract_contacts(opts.First_traj, bound, opts.Start, opts.End, opts.Step )
+for ch in interactions_for_chains:
+    plot_hic(interactions_for_chains[ch], ch)
 
