@@ -171,8 +171,8 @@ def initialize_random(n, m, fa, bound = BOUND):
 
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
         if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
-            print "The lamin site are the same as regular! Please change it and rerun the program"
-            sys.exit(1)
+            print "The lamin site are the same as regular! Please change it and rerun the program", i
+            return BSITE_R
         elif regular_bsites[i] == 1:
             return BSITE_R
         elif lamin_bsites[i] == 1:
@@ -417,7 +417,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
     print "Starting energy:", E
     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
 
-    for step in range(n):
+    for step in xrange(n):
 
         resp = modify(chain, binders, state)
 
