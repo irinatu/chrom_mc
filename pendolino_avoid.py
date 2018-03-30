@@ -493,16 +493,17 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
                 E = Enew
                 st_nr += 1
-                if GYRATION:
-                     print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
-                else:
-                    print "iter", step, "step", st_nr, "energy:", E
+                if (st_nr%100)==0: ###ZAPISUJE KAZDE 100 KROKOW!!!!
+                    if GYRATION:
+                        print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
+                    else:
+                        print "iter", step, "step", st_nr, "energy:", E
                 
-                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
+                    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
-                if st_nr == pick_step:
-                    pick_step += 50000
-                    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
+                    if st_nr == pick_step:
+                        pick_step += 50000
+                        put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
 
     put_as_pickle(out_fname, chain, binders, attached_to_lamins, state)
     out_file.close()
