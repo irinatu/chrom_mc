@@ -133,7 +133,7 @@ def plot_hic(mt):
     plt.colorbar()
     plt.show()
 
-    fig.savefig("HiC.png")
+    fig.savefig("HiC.png", dpi=1000)
     
 opts = pars_inp()
 bound = opts.Bound_atm

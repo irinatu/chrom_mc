@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -5,7 +6,8 @@ import seaborn as sns
 
 inp = raw_input("Put pendolino output: ")
 inp_list = inp.split()
-out = inp_list[0].split('.')[0]
+out = os.path.basename(inp_list[0]).split('.')[0]
+print out
 
 for file in inp_list:
     col = np.genfromtxt(file, delimiter=' ', skip_header  = 3, skip_footer = 3, usecols = (1, 3, 5, 8)) # 1- iteracja, 3 - zaakcept krok, 5 - energy, 8 - gyration
@@ -26,10 +28,10 @@ fig = plt.figure()
 plt.plot( columns[:, 2], "-", linewidth =0.5)
 plt.axis([0,len(columns[:, 1]), 0, columns[:, 2].max()])
 plt.title("Energy")
+fig.savefig(out+"_energy.png")
 plt.show()
 #plt.scatter(columns[:,1], columns[:, 2], linewidth = 0.5)
 #plt.show()
-fig.savefig(out+"_energy.png")
 fig = plt.figure()
 plt.plot( columns[:, 3], "r--", linewidth =0.5)
 plt.axis([0,len(columns[:, 2]), 0, columns[:, 3].max()])
@@ -37,7 +39,7 @@ dlugosc = len(columns[:, 3])/5
 start_mean = len(columns[:, 3]) - dlugosc
 print np.mean(columns[start_mean:, 3])
 plt.title("Gyration")
-plt.show()
 fig.savefig(out+"_gyrat.png")
+plt.show()
 
 
