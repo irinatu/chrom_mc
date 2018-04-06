@@ -1,6 +1,6 @@
 #read two trajectories written in pdb format and calculate mixing point based on  
 
-import sys, optparse
+import sys, optparse, os
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
@@ -56,15 +56,15 @@ def extract_coord(files, bound, ch):
             elif bound:
                 #print line[21], ch, line
                 if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB" and line[21] == ch:
-                    line_sp = line.split()
-                    coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
+                    #line_sp = line.split()
+                    coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
                 else: 
                     pass 
                     #print line[17:20], "tak"
             else:
                 if line[0:4] == "ATOM" and line[13] == "C" and line[21] == ch:
-                    line_sp = line.split()
-                    coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
+                    #line_sp = line.split()
+                    coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
         #print len(coord_mtx)
     return coord_mtx_list
 
@@ -139,4 +139,6 @@ p_two = plt.plot( l_av12, "r-", linewidth =0.5, label="Between")
 plt.axis([0,len(l_av1), 0, max(l_av12)])
 plt.legend(bbox_to_anchor=(1.0, 1), loc=2, borderaxespad=0.)
 #plt.show()
-fig.savefig(opts.First_traj.split()[0].split('.')[0]+ "_"+opts.Second_traj.split()[0].split('.')[0]+"_dist.png")
+head1, tail1 = os.path.split(opts.First_traj)
+head2, tail2 = os.path.split(opts.Second_traj)
+fig.savefig(tail1.split('.')[0]+ "_"+tail2.split('.')[0]+"_dist.png")
