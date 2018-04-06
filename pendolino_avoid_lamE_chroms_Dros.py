@@ -689,7 +689,7 @@ def metropolis(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_
     print "Starting energy:", E
     write_as_pdb(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
 
-    for step in range(n):
+    for step in xrange(n):
 
         resp = modify(start_pos_chain, last_pos_chain, chain, binders, state)
 

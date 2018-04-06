@@ -171,8 +171,8 @@ def initialize_random(n, m, fa, bound = BOUND):
 
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
         if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
-            print "The lamin site are the same as regular! Please change it and rerun the program"
-            sys.exit(1)
+            print "The lamin site are the same as regular! Please change it and rerun the program", i
+            return BSITE_R
         elif regular_bsites[i] == 1:
             return BSITE_R
         elif lamin_bsites[i] == 1:
@@ -417,7 +417,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
     print "Starting energy:", E
     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
 
-    for step in range(n):
+    for step in xrange(n):
 
         resp = modify(chain, binders, state)
 
@@ -493,16 +493,17 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
                 E = Enew
                 st_nr += 1
-                if GYRATION:
-                     print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
-                else:
-                    print "iter", step, "step", st_nr, "energy:", E
+                if (st_nr%100)==0: ###ZAPISUJE KAZDE 100 KROKOW!!!!
+                    if GYRATION:
+                        print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
+                    else:
+                        print "iter", step, "step", st_nr, "energy:", E
                 
-                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
+                    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
-                if st_nr == pick_step:
-                    pick_step += 50000
-                    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
+                    if st_nr == pick_step:
+                        pick_step += 50000
+                        put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
 
     put_as_pickle(out_fname, chain, binders, attached_to_lamins, state)
     out_file.close()
