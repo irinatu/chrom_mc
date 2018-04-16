@@ -79,12 +79,12 @@ def extract_contacts(files, bou, start, end, step):
     coord_mtx_list = []
     count_str = 0
     steps = start
+    chains = {}  # dictionary with dist_mtx for each chain {'A':dist_mtx, 'B':dist_mtx...}
+    coord_mtx = [] # list of [x,y,z] for one chain [[x1,y1,z1],[x2,y2,z2]...]
 
     for file in files.split():
         print file
         inF = open(file, 'r')
-        chains = {}  # dictionary with dist_mtx for each chain {'A':dist_mtx, 'B':dist_mtx...}
-        coord_mtx = [] # list of [x,y,z] for one chain [[x1,y1,z1],[x2,y2,z2]...]
         for line in inF:
             #print line
             if "HEADER" in line:
@@ -137,7 +137,7 @@ def plot_hic(mt, cha):
     plt.colorbar()
     plt.show()
 
-    fig.savefig("HiC_%s.png" %(cha))
+    fig.savefig("HiC_%s.png" %(cha), dpi = 1000)
     
 opts = pars_inp()
 bound = opts.Bound_atm

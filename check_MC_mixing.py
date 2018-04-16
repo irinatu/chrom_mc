@@ -27,8 +27,8 @@ def pars_inp():
         help = "Only BOU and LAM atoms will be considered")
     optparser.add_option('-c', type = "string",
         dest = "Chain",
-        default = '',
-        help = "The chain for mixing point")
+        default = ' ',
+        help = "The chain for mixing point, default ' '")
 			
     (opts, args) = optparser.parse_args()
 
@@ -54,9 +54,10 @@ def extract_coord(files, bound, ch):
                     coord_mtx = []
                 else: coord_mtx = []
             elif bound:
-                #print line[21], ch, line
+                #print line[0:4], line[13], line[17:20], line[21], ch
                 if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB" and line[21] == ch:
                     #line_sp = line.split()
+                    #print "ADD"
                     coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
                 else: 
                     pass 
