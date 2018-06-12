@@ -12,8 +12,8 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 R = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
-ran_seed = 2
-random.seed(ran_seed)
+#ran_seed = 2
+#random.seed(ran_seed)
 #print ran_seed
 
 EMPTY = 0
@@ -52,6 +52,10 @@ def pars_inp():
         dest = "Binders",
         default = 256,
         help = "Number of binders (default 256)")
+    optparser.add_option('-e', type = "int",
+        dest = "Save",
+        default = 100,
+        help = "Save every .... accepted step (default 100")
 			
     (opts, args) = optparser.parse_args()
 
@@ -493,7 +497,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
                 E = Enew
                 st_nr += 1
-                if (st_nr%100)==0: ###ZAPISUJE KAZDE 100 KROKOW!!!!
+                if (st_nr%opts.Save)==0 or st_nr == opts.Steps: ###ZAPISUJE KAZDE 100 KROKOW!!!!
                     if GYRATION:
                         print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
                     else:
@@ -501,7 +505,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 
                     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
-                    if st_nr == pick_step:
+                    if st_nr == pick_step or st_nr == opts.Steps:
                         pick_step += 50000
                         put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
 
@@ -541,7 +545,7 @@ else:
     M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
-print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "random_seed ", ran_seed
+print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "random_seed "#, ran_seed
 
 t2 = time.time()
 print "initialization: ", t2 - t1
