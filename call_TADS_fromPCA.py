@@ -8,6 +8,7 @@ def clip(arr, stddevs=10):
   mean = np.mean(arr)
   stddev = np.var(arr) ** 0.5
   np.clip(arr, 0, mean + stddevs * stddev, out=arr)
+  arr = np.ma.filled(arr, 0)
   return arr
   
 def dist_normalization(ma):
