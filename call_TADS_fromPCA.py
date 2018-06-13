@@ -56,14 +56,13 @@ if __name__=="__main__":
     arr_nor = dist_normalization(arr)
     pca_res = principle_component(arr_nor).Y[:,0]
     #print len(pca_res)
-    #print pca_res
-    zero_crossings = np.where(np.diff(np.sign(pca_res)))[0]
+    zero_crossings = np.where(np.diff(np.sign(pca_res)))[0] #indexes of the sign henging
     start = 0
     nr = 1
     for i in zero_crossings:
-        print "%i   2L  %i  %i" %(nr, start, i)
+        print "%i\t2L\t%i\t%i" %(nr, start, i)
         nr +=1
         start=i+1
     if i != len(pca_res)-1:
-        print "%i   2L  %i  %i" %(nr, start, len(pca_res)-1)
+        print "%i\t2L\t%i\t%i" %(nr, start, len(pca_res)-1)
     
