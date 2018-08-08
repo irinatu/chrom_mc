@@ -1,15 +1,26 @@
 from matplotlib.mlab import PCA
 import numpy as np
-import optparse
+import optparse, scipy.ndimage
 from sys import argv
+import matplotlib.pyplot as plt
 
 def clip(arr, stddevs=10):
-  arr = np.ma.masked_invalid(arr)
-  mean = np.mean(arr)
-  stddev = np.var(arr) ** 0.5
-  np.clip(arr, 0, mean + stddevs * stddev, out=arr)
-  arr = np.ma.filled(arr, 0)
-  return arr
+    arr = np.ma.masked_invalid(arr)
+    mean = np.mean(arr)
+    stddev = np.var(arr) ** 0.5
+    np.clip(arr, 0, mean + stddevs * stddev, out=arr)
+    arr = np.ma.filled(arr, 0)
+    return arr
+
+def clip_and_blur(arr, stddevs=5, blur=1): # function from Krzysiek script
+    arr = np.ma.masked_invalid(arr)
+    mean = np.mean(arr)
+    stddev = np.var(arr) ** 0.5
+    np.clip(arr, 0, mean + stddevs * stddev, out=arr)
+    arr = np.ma.filled(arr, 0)
+    scipy.ndimage.gaussian_filter(arr, blur, output=arr)
+    np.clip(arr, mean * 0.01, mean + stddevs * stddev, out=arr)
+    return arr
   
 def dist_normalization(ma):
     l = ma.shape[0]
@@ -47,23 +58,37 @@ def principle_component(mac):
 if __name__=="__main__":
     
     optparser = optparse.OptionParser(usage = "%prog [<options>]")
-    optparser.add_option('-m', type = "string", default = "", dest="Matrix", help = "Numpy matrix in npy format")
+    optparser.add_option('-m', type = "string", default = "", dest="Matrix", help = "Numpy matrix in npy format (real) - will be cliped and blured")
+    optparser.add_option('-c', type = "string", default = "", dest="Matrix2", help = "Second Numpy matrix in npy format (simulation)")
     (opts,args) = optparser.parse_args()
     if len(argv) ==1:
         print optparser.format_help()
         exit(1)
     
-    arr = clip(np.load(opts.Matrix))
+    arr = np.load(opts.Matrix)
+    arr = clip_and_blur(arr)
     arr_nor = dist_normalization(arr)
     pca_res = principle_component(arr_nor).Y[:,0]
+    
+    arr2 = np.load(opts.Matrix2)
+    arr_nor2 = dist_normalization(arr2)
+    pca_res2 = principle_component(arr_nor2).Y[:,0]
+    y-ki 
+
+    plt.plot(pca_res, label=opts.Matrix.split(".")[0])
+    plt.plot(pca_res2, label=opts.Matrix2.split(".")[0])
+    plt.legend()
+    plt.show()
+    
+    
     #print len(pca_res)
-    zero_crossings = np.where(np.diff(np.sign(pca_res)))[0] #indexes of the sign henging
-    start = 0
-    nr = 1
-    for i in zero_crossings:
-        print "%i\t2L\t%i\t%i" %(nr, start, i)
-        nr +=1
-        start=i+1
-    if i != len(pca_res)-1:
-        print "%i\t2L\t%i\t%i" %(nr, start, len(pca_res)-1)
+    #zero_crossings = np.where(np.diff(np.sign(pca_res)))[0] #indexes of the sign henging
+    #start = 0
+    #nr = 1
+    #for i in zero_crossings:
+    #    print "%i\t2L\t%i\t%i" %(nr, start, i)
+    #    nr +=1
+    #    start=i+1
+    #if i != len(pca_res)-1:
+    #    print "%i\t2L\t%i\t%i" %(nr, start, len(pca_res)-1)
     
