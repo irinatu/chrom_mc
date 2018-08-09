@@ -3,6 +3,7 @@ import numpy as np
 import optparse, scipy.ndimage
 from sys import argv
 import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
 
 def clip(arr, stddevs=10):
     arr = np.ma.masked_invalid(arr)
@@ -54,6 +55,17 @@ def principle_component(mac):
     results = PCA(mac1)
     return results
     
+def TADSdef(pca):
+    zero_crossings = np.where(np.diff(np.sign(pca)))[0] #indexes of the sign henging
+    start = 1
+    nr = 1
+    for i in zero_crossings:
+        if i+1 != start:
+            print "%i\t2L\t%i\t%i" %(nr, start, i+1)
+            nr +=1
+            start=i+2
+    if i != len(pca)-1:
+        print "%i\t2L\t%i\t%i" %(nr, start, len(pca_res)-1)    
     
 if __name__=="__main__":
     
@@ -69,18 +81,26 @@ if __name__=="__main__":
     arr = clip_and_blur(arr)
     arr_nor = dist_normalization(arr)
     pca_res = principle_component(arr_nor).Y[:,0]
+    y_ki = savgol_filter(pca_res, 51,3)
     
     arr2 = np.load(opts.Matrix2)
     arr_nor2 = dist_normalization(arr2)
     pca_res2 = principle_component(arr_nor2).Y[:,0]
-    y-ki 
+    y_ki2 = savgol_filter(pca_res2, 51,3)
 
-    plt.plot(pca_res, label=opts.Matrix.split(".")[0])
-    plt.plot(pca_res2, label=opts.Matrix2.split(".")[0])
+    plt.plot(pca_res, linewidth=2, label=opts.Matrix.split(".")[0])
+    plt.plot(pca_res2, linewidth=2, label=opts.Matrix2.split(".")[0])
+    plt.plot(y_ki, label=opts.Matrix.split(".")[0]+"_smooth" )
+    plt.plot(y_ki2, label=opts.Matrix2.split(".")[0]+"_smooth" )
     plt.legend()
     plt.show()
     
+    print "FIRST"
+    TADSdef(pca_res)
+    print "SECOND"
+    TADSdef(pca_res2)
     
+      
     #print len(pca_res)
     #zero_crossings = np.where(np.diff(np.sign(pca_res)))[0] #indexes of the sign henging
     #start = 0
