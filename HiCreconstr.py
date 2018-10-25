@@ -47,6 +47,11 @@ def pars_inp():
         type = "int",
         default = 1,
         help = "The mode for work (1 or 2): for 1/dist use 1, for cut_off - use 2. 1 is default")
+    optparser.add_option('-c',
+        dest = "CutOff",
+        type = "float",
+        default = 3.5,
+        help = "TCutOff for calculation of contac in 'cut_aff mode', default is 3.5")
     
 			
     (opts, args) = optparser.parse_args()
@@ -96,10 +101,11 @@ def calculate_dist_mtx_cutoff(coor_m, dis_mtx):
           #      pass
                 #print i,j, dis
             dis = dis/3.0
-            if dis <= 3.5 and i != j: # calculate only contacts within 3.5 cutoff
+            if dis <= opts.CutOff and i != j: # calculate only contacts within 3.5 cutoff
                 dis_mtx[i,j] = dis_mtx[j,i] = dis_mtx[i,j] + 1.0 # contact calculation
                 #print i, j, dis
         dis_mtx[i,i] = dis_mtx[i,i] +1.0
+    #print dis_mtx[5:25, 5:25], dis_mtx.min(), dis_mtx.max()
     return dis_mtx
     
 def extract_contacts(files, bou, start, end, step):
@@ -162,13 +168,16 @@ def extract_contacts(files, bou, start, end, step):
                     line_sp = line.split()
                     #print line
                     coord_mtx.append([float(line_sp[5]), float(line_sp[6]), float(line_sp[7])])
-    inter_mat = inter_mat/ file_nr
+    #inter_mat = inter_mat/ file_nr
     return inter_mat
     
 def plot_hic(mt):
     fig = plt.figure()
-    mt = clip_and_blur(mt)
+    #print mt[5:25, 5:25]
+    if opts.Mode ==1:
+        mt = clip_and_blur(mt)
     plt.imshow(mt,origin='lower',norm=LogNorm(), cmap=cm.jet, interpolation='nearest')
+    #plt.imshow(mt,origin='lower', cmap=cm.jet)
     plt.colorbar()
     #plt.show()
 
