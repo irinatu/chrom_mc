@@ -40,33 +40,39 @@ def pars_inp():
     return opts	
                  
                  
-def extract_coord(files, bound, ch):
+def extract_coord(files, bound, ch, steps_subset):
     print files
     coord_mtx_list = []
+    str_nr = 0
     for file in files.split():
         print file
         inF = open(file, 'r')
         coord_mtx = []
         for line in inF:
             if "HEADER" in line:
-                if len(coord_mtx) > 0:
-                    coord = np.array(coord_mtx)
-                    coord_mtx_list.append(coord)
-                    coord_mtx = []
-                else: coord_mtx = []
-            elif bound:
-                #print line[0:4], line[13], line[17:20], line[21], ch
-                if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB" and line[21] == ch:
-                    #line_sp = line.split()
-                    #print "ADD"
-                    coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
-                else: 
-                    pass 
-                    #print line[17:20], "tak"
-            else:
-                if line[0:4] == "ATOM" and line[13] == "C" and line[21] == ch:
-                    #line_sp = line.split()
-                    coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
+                str_nr = str_nr +1
+                if str_nr in steps_subset:
+                    if len(coord_mtx) > 0:
+                        coord = np.array(coord_mtx)
+                        coord_mtx_list.append(coord)
+                        coord_mtx = []
+                    else: coord_mtx = []
+                else: continue
+            elif str_nr in steps_subset:
+                if bound:
+                    #print line[0:4], line[13], line[17:20], line[21], ch
+                    if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB" and line[21] == ch:
+                        #line_sp = line.split()
+                        #print "ADD"
+                        coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
+                    else: 
+                        pass 
+                        #print line[17:20], "tak"
+                elif str_nr in steps_subset:
+                    if line[0:4] == "ATOM" and line[13] == "C" and line[21] == ch:
+                        #line_sp = line.split()
+                        coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
+            else:continue
         #print len(coord_mtx)
     return coord_mtx_list
 
@@ -95,32 +101,47 @@ def aver_dist(sub1, sub2):
     
 
 
-f = open(opts.First_traj)
-passage = f.read()
-words = re.findall(r'HEADER', passage)
-#word_counts = Counter(words)
-whole =len(words)
+def calc_frames(files):
+    print files
+    whole = 0
+    for one in files.split():
+        f = open(one)
+        passage = f.read()
+        words = re.findall(r'HEADER', passage)
+        #word_counts = Counter(words)
+        whole = whole + len(words)
+    return whole
 
     
 opts = pars_inp()
 bound_at = opts.Bound_atm
-coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain)
-coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain)
-print "klatki", len(coord_from_traj1), len(coord_from_traj2)
+whole_nr1 = calc_frames(opts.First_traj)
+whole_nr2 = calc_frames(opts.Second_traj)
+
+if len(whole_nr1) < len(whole_nr2): 
+    middle = len(whole_nr1)/2
+else: middle = len(whole_nr2)/2
+
+
+steps = [middle *k/20 for k in range(10,21)]
+coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps)
+coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain, steps)
+
+print "klatki", len(coord_from_traj1), len(coord_from_traj2), steps
 
 if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
     print "ERROR: The polimers lenght in the first and the second trajectories are unequal!!! ", coord_from_traj1[0].shape[0], coord_from_traj2[0].shape[0] 
     sys.exit(1)
 else: pol_len = coord_from_traj1[0].shape[0]
  
-if len(coord_from_traj1) == len(coord_from_traj2):
-    middle = len(coord_from_traj1)/2
-elif len(coord_from_traj1) < len(coord_from_traj2): 
-    middle = len(coord_from_traj1)/2
-else: middle = len(coord_from_traj2)/2
+#if len(coord_from_traj1) == len(coord_from_traj2):
+#    middle = len(coord_from_traj1)/2
+#elif len(coord_from_traj1) < len(coord_from_traj2): 
+#    middle = len(coord_from_traj1)/2
+#else: middle = len(coord_from_traj2)/2
 #incr = (middle/2) -1
 incr = middle/5
-whole = middle*2
+#whole = middle*2
 #middle = 100000
 
 print len(coord_from_traj1[0]), len(coord_from_traj2[0])
