@@ -41,11 +41,11 @@ def pars_inp():
                  
                  
 def extract_coord(files, bound, ch, steps_subset):
-    print files
+    #print files
     coord_mtx_list = []
     str_nr = 0
     for file in files.split():
-        print file
+        #print file
         inF = open(file, 'r')
         coord_mtx = []
         for line in inF:
@@ -68,7 +68,7 @@ def extract_coord(files, bound, ch, steps_subset):
                     else: 
                         pass 
                         #print line[17:20], "tak"
-                elif str_nr in steps_subset:
+                else:
                     if line[0:4] == "ATOM" and line[13] == "C" and line[21] == ch:
                         #line_sp = line.split()
                         coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
@@ -77,18 +77,17 @@ def extract_coord(files, bound, ch, steps_subset):
     return coord_mtx_list
 
     
-def subset_prep(coor_list, mid, pol_l):
+def subset_prep(coor_list, pol_l):
     intra_dist_list = []
-    steps = [mid *k/20 for k in range(10,21)]
-    for s in steps:
+    for macie in coor_list:
         inter_mat = np.zeros((pol_l, pol_l), float)
         for i in range(pol_l):
             for j in range(i, pol_l):
-                dis = np.sqrt(np.sum((coor_list[s][i] - coor_list[s][j])**2))
+                dis = np.sqrt(np.sum((macie[i] - macie[j])**2))
                 #print "DISTANCE", dis
                 inter_mat[i,j] = inter_mat[j,i] = dis
         intra_dist_list.append(inter_mat)
-    return intra_dist_list                
+    return intra_dist_list                              # list of martices with distances between atoms             
 
 def aver_dist(sub1, sub2):
     dis_list = []
@@ -97,7 +96,7 @@ def aver_dist(sub1, sub2):
             dis_mat = np.sqrt(np.sum(np.power((su-us),2))) 
             #print dis_mat
             dis_list.append(dis_mat)
-    return np.mean(dis_list)           
+    return np.mean(dis_list)                  # mean of distances between structures in two subsets
     
 
 
@@ -110,6 +109,7 @@ def calc_frames(files):
         words = re.findall(r'HEADER', passage)
         #word_counts = Counter(words)
         whole = whole + len(words)
+    print whole
     return whole
 
     
@@ -118,16 +118,18 @@ bound_at = opts.Bound_atm
 whole_nr1 = calc_frames(opts.First_traj)
 whole_nr2 = calc_frames(opts.Second_traj)
 
-if len(whole_nr1) < len(whole_nr2): 
-    middle = len(whole_nr1)/2
-else: middle = len(whole_nr2)/2
+#if whole_nr1 < whole_nr2: 
+#    middle = whole_nr1/2
+middle = min(whole_nr1, whole_nr2)/2
+whole = middle*2
 
 
 steps = [middle *k/20 for k in range(10,21)]
-coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps)
+coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps) #list of matrices of coordinates
 coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain, steps)
 
-print "klatki", len(coord_from_traj1), len(coord_from_traj2), steps
+print "klatki", len(coord_from_traj1), len(coord_from_traj2), steps, whole
+print coord_from_traj1[:3]
 
 if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
     print "ERROR: The polimers lenght in the first and the second trajectories are unequal!!! ", coord_from_traj1[0].shape[0], coord_from_traj2[0].shape[0] 
@@ -140,7 +142,7 @@ else: pol_len = coord_from_traj1[0].shape[0]
 #    middle = len(coord_from_traj1)/2
 #else: middle = len(coord_from_traj2)/2
 #incr = (middle/2) -1
-incr = middle/5
+incr = min(middle/5, 1000)
 #whole = middle*2
 #middle = 100000
 
@@ -148,8 +150,8 @@ print len(coord_from_traj1[0]), len(coord_from_traj2[0])
 l_av1 = []
 l_av12 = []
 while middle < whole:
-    subset_1 = subset_prep(coord_from_traj1, middle, pol_len)
-    subset_2 = subset_prep(coord_from_traj2, middle, pol_len)
+    subset_1 = subset_prep(coord_from_traj1, pol_len)
+    subset_2 = subset_prep(coord_from_traj2, pol_len)
     print pol_len, middle, len(subset_1), len(subset_2)
     av1 = aver_dist(subset_1, subset_1)
     av12 = aver_dist(subset_1, subset_2)
@@ -162,6 +164,10 @@ while middle < whole:
         break
     else:
         middle = middle + incr
+        steps = [middle *k/20 for k in range(10,21)]
+        print steps
+        coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps) #list of matrices of coordinates
+        coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain, steps)
 
 fig = plt.figure()
 p_one = plt.plot( l_av1, "b-", linewidth =0.5, label="Inside")
