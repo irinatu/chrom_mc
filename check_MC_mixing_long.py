@@ -33,7 +33,7 @@ def pars_inp():
 			
     (opts, args) = optparser.parse_args()
 
-#    print len(sys.argv)
+
     if len(sys.argv) < 2:
         print optparser.format_help() #prints help if no arguments
         sys.exit(1)
@@ -52,26 +52,25 @@ def extract_coord(files, bound, ch, steps_subset):
             if "HEADER" in line:
                 str_nr = str_nr +1
                 if str_nr in steps_subset:
-                    if len(coord_mtx) > 0:
-                        coord = np.array(coord_mtx)
-                        coord_mtx_list.append(coord)
-                        coord_mtx = []
-                    else: coord_mtx = []
+                    print "STR_NR", str_nr
+                   
                 else: continue
             elif str_nr in steps_subset:
                 if bound:
                     #print line[0:4], line[13], line[17:20], line[21], ch
                     if line[0:4] == "ATOM" and line[13] == "C" and line[17:20] != "UNB" and line[21] == ch:
-                        #line_sp = line.split()
-                        #print "ADD"
                         coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
                     else: 
                         pass 
-                        #print line[17:20], "tak"
+
                 else:
                     if line[0:4] == "ATOM" and line[13] == "C" and line[21] == ch:
                         #line_sp = line.split()
                         coord_mtx.append([float(line[30:37]), float(line[38:45]), float(line[46:53])])
+            elif len(coord_mtx) > 0:
+                coord = np.array(coord_mtx)
+                coord_mtx_list.append(coord)
+                coord_mtx = []
             else:continue
         #print len(coord_mtx)
     return coord_mtx_list
@@ -118,41 +117,27 @@ bound_at = opts.Bound_atm
 whole_nr1 = calc_frames(opts.First_traj)
 whole_nr2 = calc_frames(opts.Second_traj)
 
-#if whole_nr1 < whole_nr2: 
-#    middle = whole_nr1/2
+
 middle = min(whole_nr1, whole_nr2)/2
 whole = middle*2
-
-
-steps = [middle *k/20 for k in range(10,21)]
-coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps) #list of matrices of coordinates
-coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain, steps)
-
-print "klatki", len(coord_from_traj1), len(coord_from_traj2), steps, whole
-print coord_from_traj1[:3]
-
-if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
-    print "ERROR: The polimers lenght in the first and the second trajectories are unequal!!! ", coord_from_traj1[0].shape[0], coord_from_traj2[0].shape[0] 
-    sys.exit(1)
-else: pol_len = coord_from_traj1[0].shape[0]
- 
-#if len(coord_from_traj1) == len(coord_from_traj2):
-#    middle = len(coord_from_traj1)/2
-#elif len(coord_from_traj1) < len(coord_from_traj2): 
-#    middle = len(coord_from_traj1)/2
-#else: middle = len(coord_from_traj2)/2
-#incr = (middle/2) -1
 incr = min(middle/5, 1000)
-#whole = middle*2
-#middle = 100000
 
-print len(coord_from_traj1[0]), len(coord_from_traj2[0])
 l_av1 = []
 l_av12 = []
 while middle < whole:
+    steps = [middle *k/20 for k in range(10,21)]
+    print steps
+    coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps) #list of matrices of coordinates
+    coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain, steps)
+    
+    if coord_from_traj1[0].shape[0] != coord_from_traj2[0].shape[0]:
+        print "ERROR: The polimers lenght in the first and the second trajectories are unequal!!! ", coord_from_traj1[0].shape[0], coord_from_traj2[0].shape[0] 
+        sys.exit(1)
+    else: pol_len = coord_from_traj1[0].shape[0]
+    
     subset_1 = subset_prep(coord_from_traj1, pol_len)
     subset_2 = subset_prep(coord_from_traj2, pol_len)
-    print pol_len, middle, len(subset_1), len(subset_2)
+    print pol_len, middle, whole, len(subset_1), len(subset_2)
     av1 = aver_dist(subset_1, subset_1)
     av12 = aver_dist(subset_1, subset_2)
     l_av1.append(av1)
@@ -164,10 +149,7 @@ while middle < whole:
         break
     else:
         middle = middle + incr
-        steps = [middle *k/20 for k in range(10,21)]
-        print steps
-        coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps) #list of matrices of coordinates
-        coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain, steps)
+        
 
 fig = plt.figure()
 p_one = plt.plot( l_av1, "b-", linewidth =0.5, label="Inside")
