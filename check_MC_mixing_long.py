@@ -51,10 +51,11 @@ def extract_coord(files, bound, ch, steps_subset):
         for line in inF:
             if "HEADER" in line:
                 str_nr = str_nr +1
-                if str_nr in steps_subset:
-                    print "STR_NR", str_nr
+                continue
+                #if str_nr in steps_subset:
+                #    print "STR_NR", str_nr
                    
-                else: continue
+                #else: continue
             elif str_nr in steps_subset:
                 if bound:
                     #print line[0:4], line[13], line[17:20], line[21], ch
@@ -120,13 +121,13 @@ whole_nr2 = calc_frames(opts.Second_traj)
 
 middle = min(whole_nr1, whole_nr2)/2
 whole = middle*2
-incr = min(middle/5, 1000)
+incr = min(middle/5, 3000)
 
 l_av1 = []
 l_av12 = []
 while middle < whole:
     steps = [middle *k/20 for k in range(10,21)]
-    print steps
+    print "STEPS", steps
     coord_from_traj1 = extract_coord(opts.First_traj, bound_at, opts.Chain, steps) #list of matrices of coordinates
     coord_from_traj2 = extract_coord(opts.Second_traj, bound_at, opts.Chain, steps)
     
