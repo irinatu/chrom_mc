@@ -59,6 +59,10 @@ def pars_inp():
         dest = "Binders",
         default = 256,
         help = "Number of binders (default 256)")
+    optparser.add_option('-e', type = "int",
+        dest = "Save",
+        default = 100,
+        help = "Save every .... accepted step (default 100")
 			
     (opts, args) = optparser.parse_args()
 
@@ -537,8 +541,6 @@ def bonds(chain, stat):
 
 def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
     #move binders
-    
-        
     if random.randint(0, 1):
         i = random.randint(0, len(binders) - 1)
         move = random.choice(MOVES)
@@ -765,10 +767,11 @@ def metropolis(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_
 
                 E = Enew
                 st_nr += 1
-                if GYRATION:
-                     print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain, last_pos_chain)
-                else:
-                    print "iter", step, "step", st_nr, "energy:", E
+                if (st_nr%opts.Save)==0 or st_nr == opts.Steps: ###ZAPISUJE KAZDE 100 KROKOW!!!!
+                    if GYRATION:
+                        print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain, last_pos_chain)
+                    else:
+                        print "iter", step, "step", st_nr, "energy:", E
                 
                 write_as_pdb(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
