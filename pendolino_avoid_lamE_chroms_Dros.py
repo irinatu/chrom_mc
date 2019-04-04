@@ -1,5 +1,6 @@
 import numpy,math,time, optparse, sys, pickle
 import random as random
+### TODO: make revers not mandatory!!!!
 
 #accepted move vectors
 #MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1,0,1], [0,1,1], [1,1,0], [-1,0,-1], [0,-1,-1], [-1,-1,0], [1,0,-1], [0,1,-1], [1,-1,0], [-1,0,1], [0,-1,1], [-1,1,0], [-1,1,-1], [-1,-1,-1], [1,1,1], [1,-1,1], [1,-1,-1], [-1,-1,1], [-1,1,1], [1,1,-1]])
@@ -50,10 +51,10 @@ def pars_inp():
     optparser.add_option('-l', type = "string",
         dest = "Ch_lenght",
         default = 512,
-        help = "Lenght of the chains, separated by comma (two chains: 234, 456) (default one chain with 512 bins lenght)")
+        help = "Lenght of the chains, separated by comma (two chains: 234,456) (default one chain with 512 bins lenght)")
     optparser.add_option('-r', type = "string",
         dest = "Revers",
-        default = 1058,
+        default = "",
         help = "Lenght of the chains, where tail should be near the center (2R, 3R), separated by comma (two chains: 234, 456) (default one chain with 512 bins lenght)")
     optparser.add_option('-b', type = "int",
         dest = "Binders",
