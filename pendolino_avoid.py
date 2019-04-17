@@ -87,7 +87,10 @@ def initialize_import(f):
     b = list_ob[1]
     a = list_ob[2]
     state = list_ob[3]
-    return ch, b, a, state
+    b_nr = list_ob[4]
+    b_sites = list_ob[5]
+    binder_l = list_ob[6]
+    return ch, b, a, state, b_nr, b_sites, binder_l
 
 def dist_from_mi(x, y, z, mi):
         return math.sqrt((x - mi)**2 + (y - mi)**2 + (z - mi)**2)
@@ -98,7 +101,7 @@ def getStateWithLamins(bound, f):
     MIDDLE = bound / 2
     lam_name = f.split('.pdb')[0] + '_lamin.pdb'
     save_lam = open(lam_name, "w")
-    save_lam.write("HEADER LAMINA")
+    save_lam.write("MODEL LAMINA")
     at_nr = 1
 
     
@@ -114,7 +117,7 @@ def getStateWithLamins(bound, f):
                         line = "\nATOM  " + str(at_nr).rjust(5) + " " + "P".center(4) + " " + "LAM" + "  " + str(at_nr).rjust(4) + "    " + str(round(x * DIST, 3)).rjust(8) + str(round(y * DIST, 3)).rjust(8) + str(round(z * DIST, 3)).rjust(8) + "  0.00 00.00"
                         at_nr += 1
                         save_lam.write(line)
-                    
+    save_lam.write("\nENDMDL")
     save_lam.close()
     return state
 
@@ -408,9 +411,9 @@ GYRATION = True
 CHECK_E = False
 def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
 
-    def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state):
+    def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState):
         # dump the last state to the pickle
-        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state]
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState]
         pickle_fname = p_out.split('.pdb')[0] + ".pick"
         pickle_file = open(pickle_fname, 'w')
         pickle.dump(l_obj, pickle_file)
@@ -512,7 +515,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                         pick_step += 50000
                         put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
 
-    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state)
+    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
     out_file.close()
 
 
@@ -529,9 +532,6 @@ def output_name(ou, m, n):
 
 opts = pars_inp()
 
-for r in range(len(opts.Regular_bsites.split(","))):
-  BSITE_R.append(4+r)
-  BINDER.append(4+len(opts.Regular_bsites.split(","))+r) 
 
 if opts.In_str == '':
     rand_init = True
@@ -544,14 +544,17 @@ if rand_init:
     N = opts.Ch_lenght # length of the chain
     M = [int(e) for e in opts.Binders.split(",")] # nr of binders
     fn = output_name(opts.Out_str, M, N)
+    for r in range(len(opts.Regular_bsites.split(","))):
+        BSITE_R.append(4+r)
+        BINDER.append(4+len(opts.Regular_bsites.split(","))+r) 
     c, b, a, state = initialize_random(N, M, fn)
 else: 
-    c, b, a, state = initialize_import(opts.In_str)
+    c, b, a, state, M, BSITE_R,  BINDER = initialize_import(opts.In_str)
     N = c.shape[0]
-    M = b.shape[0]
+    #M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
-print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "random_seed "#, ran_seed
+print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "bsites ", opts.Regular_bsites, "lamin", opts.Lamin_bsites
 
 t2 = time.time()
 print "initialization: ", t2 - t1
