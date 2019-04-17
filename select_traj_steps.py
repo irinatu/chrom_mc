@@ -4,7 +4,7 @@ import os, argparse, sys
 
 def pars_inp():
     ## read/validate command-line arguments
-    argparser = argparse.ArgumentParser( usage = "%prog  [<options>]")
+    argparser = argparse.ArgumentParser( usage = "%%prog  [<options>]")
 
     argparser.add_argument('-i',
         dest = "Inp",
@@ -31,7 +31,7 @@ def find_lines_in_model(my_file, out): #find first HEADER and calculate number o
     find = 0
     while 1:
         line = my_file.readline()
-        if "HEADER" in line:
+        if "MODEL" in line:
             pos_in_line = len(line)
             find += 1
             if find ==2: break
@@ -43,7 +43,7 @@ def write_model(m_file, out_f):
     find = 0
     while 1:
         line = m_file.readline()
-        if "HEADER" in line:
+        if "MODEL" in line:
             find += 1
             if find == 2: break
         out_f.write(line)

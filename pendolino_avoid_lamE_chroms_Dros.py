@@ -1,21 +1,20 @@
 import numpy,math,time, optparse, sys, pickle
 import random as random
-### TODO: make revers not mandatory!!!!
 
 #accepted move vectors
 #MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1,0,1], [0,1,1], [1,1,0], [-1,0,-1], [0,-1,-1], [-1,-1,0], [1,0,-1], [0,1,-1], [1,-1,0], [-1,0,1], [0,-1,1], [-1,1,0], [-1,1,-1], [-1,-1,-1], [1,1,1], [1,-1,1], [1,-1,-1], [-1,-1,1], [-1,1,1], [1,1,-1]])
 MOVES = numpy.array([[0,0,1], [0,1,0], [1,0,0], [0,0,-1], [0,-1,0], [-1,0,0], [1,0,1], [0,1,1], [1,1,0], [-1,0,-1], [0,-1,-1], [-1,-1,0], [1,0,-1], [0,1,-1], [1,-1,0], [-1,0,1], [0,-1,1], [-1,1,0]])
-#accepted matching positions of binding sites
-#BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
-BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
+#accepted matching positions of binding sites = Energy calculation
+BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
+#BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 #TERMOVES = numpy.array([[-2, -2, -2], [-2, -2, -1], [-2, -2, 0], [-2, -2, 1], [-2, -2, 2], [-2, -1, -2], [-2, -1, -1], [-2, -1, 0], [-2, -1, 1], [-2, -1, 2], [-2, 0, -2], [-2, 0, -1], [-2, 0, 0], [-2, 0, 1], [-2, 0, 2], [-2, 1, -2], [-2, 1, -1], [-2, 1, 0], [-2, 1, 1], [-2, 1, 2], [-2, 2, -2], [-2, 2, -1], [-2, 2, 0], [-2, 2, 1], [-2, 2, 2], [-1, -2, -2], [-1, -2, -1], [-1, -2, 0], [-1, -2, 1], [-1, -2, 2], [-1, -1, -2], [-1, -1, -1], [-1, -1, 0], [-1, -1, 1], [-1, -1, 2], [-1, 0, -2], [-1, 0, -1], [-1, 0, 0], [-1, 0, 1], [-1, 0, 2], [-1, 1, -2], [-1, 1, -1], [-1, 1, 0], [-1, 1, 1], [-1, 1, 2], [-1, 2, -2], [-1, 2, -1], [-1, 2, 0], [-1, 2, 1], [-1, 2, 2], [0, -2, -2], [0, -2, -1], [0, -2, 0], [0, -2, 1], [0, -2, 2], [0, -1, -2], [0, -1, -1], [0, -1, 0], [0, -1, 1], [0, -1, 2], [0, 0, -2], [0, 0, -1], [0, 0, 1], [0, 0, 2], [0, 1, -2], [0, 1, -1], [0, 1, 0], [0, 1, 1], [0, 1, 2], [0, 2, -2], [0, 2, -1], [0, 2, 0], [0, 2, 1], [0, 2, 2], [1, -2, -2], [1, -2, -1], [1, -2, 0], [1, -2, 1], [1, -2, 2], [1, -1, -2], [1, -1, -1], [1, -1, 0], [1, -1, 1], [1, -1, 2], [1, 0, -2], [1, 0, -1], [1, 0, 0], [1, 0, 1], [1, 0, 2], [1, 1, -2], [1, 1, -1], [1, 1, 0], [1, 1, 1], [1, 1, 2], [1, 2, -2], [1, 2, -1], [1, 2, 0], [1, 2, 1], [1, 2, 2], [2, -2, -2], [2, -2, -1], [2, -2, 0], [2, -2, 1], [2, -2, 2], [2, -1, -2], [2, -1, -1], [2, -1, 0], [2, -1, 1], [2, -1, 2], [2, 0, -2], [2, 0, -1], [2, 0, 0], [2, 0, 1], [2, 0, 2], [2, 1, -2], [2, 1, -1], [2, 1, 0], [2, 1, 1], [2, 1, 2], [2, 2, -2], [2, 2, -1], [2, 2, 0], [2, 2, 1], [2, 2, 2]])
 
 TERMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1], [1,1,0], [-1,-1,0], [-1,1,0], [1,-1,0], [1,0,1], [-1,0,1], [1,0,-1], [-1, 0, -1], [0,1,-1], [0,-1,-1], [0,-1,1], [0,1,1]])
 
 # radius of the nucleus
-R = 20
+RAD = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
-BOUND = 2 * R + 2
+BOUND = 2 * RAD + 2
 #ran_seed = 5
 #random.seed(ran_seed)
 #print ran_seed
@@ -51,19 +50,15 @@ def pars_inp():
     optparser.add_option('-l', type = "string",
         dest = "Ch_lenght",
         default = 512,
-        help = "Lenght of the chains, separated by comma (two chains: 234,456) (default one chain with 512 bins lenght)")
+        help = "Lenght of the chains, separated by comma (two chains: 234, 456) (default one chain with 512 bins lenght)")
     optparser.add_option('-r', type = "string",
         dest = "Revers",
-        default = "",
+        default = 1058,
         help = "Lenght of the chains, where tail should be near the center (2R, 3R), separated by comma (two chains: 234, 456) (default one chain with 512 bins lenght)")
     optparser.add_option('-b', type = "int",
         dest = "Binders",
         default = 256,
         help = "Number of binders (default 256)")
-    optparser.add_option('-e', type = "int",
-        dest = "Save",
-        default = 100,
-        help = "Save every .... accepted step (default 100")
 			
     (opts, args) = optparser.parse_args()
 
@@ -542,6 +537,8 @@ def bonds(chain, stat):
 
 def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
     #move binders
+    
+        
     if random.randint(0, 1):
         i = random.randint(0, len(binders) - 1)
         move = random.choice(MOVES)
@@ -559,19 +556,19 @@ def modify(sta_pos_chain, la_pos_chain, chain, binders, state, bound = BOUND):
         #print "OLD", chain[i]
         if good_neighbors(new, i, chain, sta_pos_chain, la_pos_chain) and no_collisions(tuple(new), state):  # test if there is no collisions (the same place by different atoms) and no intersect of bonds
             if i not in sta_pos_chain and i not in la_pos_chain:
-                if dist(chain[abs(i-1)], new) <= numpy.sqrt(2) and dist(chain[i+1], new) <= numpy.sqrt(2) and not intersect(new, chain[abs(i-1)], state, chain) and not intersect(new, chain[i+1], state, chain):
+                if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
                     #print "Nie przecin", i
                     return True, i, move
                 else: pass
                          
             elif i in la_pos_chain:
                 #print "Last", i, la_pos_chain 
-                if dist(chain[abs(i-1)], new) <= numpy.sqrt(2) and not intersect(new, chain[abs(i-1)], state, chain):
+                if dist(chain[numpy.absolute(i-1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i-1)], state, chain):
                 #print "Nie przecin", i
                     return True, i, move
             elif i in sta_pos_chain:
                 #print "FIRST", i, sta_pos_chain
-                if dist(chain[i+1], new) <= numpy.sqrt(2) and not intersect(new, chain[i+1], state, chain):
+                if dist(chain[numpy.absolute(i+1)], new) <= numpy.sqrt(2) and not intersect(new, chain[numpy.absolute(i+1)], state, chain):
                 #print "Nie przecin", i
                     return True, i, move
                 
@@ -590,10 +587,13 @@ def write_as_pdb(ch_nr, rev, chain, binders, attached_to_lamins, state, f, nb, m
     n = binders.shape[0]
     f.write("HEADER %i %d step %i\nTITLE %s" % (nb, l + n, metr_step, name))
     at_nr = 0
-
+	
     def pdb_line(at_name, at_nr, res_nr, desc, pos, chain_n):
-        return "\nATOM  " + str(at_nr).rjust(5) + " " + at_name.center(4) + " " + desc + " " + chain_n + str(res_nr).rjust(4) + "    " + str(round(pos[0] * DIST, 3)).rjust(8) + str(round(pos[1] * DIST, 3)).rjust(8) + str(round(pos[2] * DIST, 3)).rjust(8) + "  0.00 00.00"
-        
+        if res_nr < 10000:
+            return "\nATOM  " + str(at_nr).rjust(5) + " " + at_name.center(4) + " " + desc + " " + chain_n + str(res_nr).rjust(4) + "    " + str(round(pos[0] * DIST, 3)).rjust(8) + str(round(pos[1] * DIST, 3)).rjust(8) + str(round(pos[2] * DIST, 3)).rjust(8) + "  0.00 00.00"
+        else: 
+            return "\nATOM  " + str(at_nr).rjust(5) + " " + at_name.center(4) + " " + desc + " " + chain_n + str(res_nr).rjust(5) + "   " + str(round(pos[0] * DIST, 3)).rjust(8) + str(round(pos[1] * DIST, 3)).rjust(8) + str(round(pos[2] * DIST, 3)).rjust(8) + "  0.00 00.00"
+    
     chain_list = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "R", "S", "T"]
     for l, ch_n in zip(ch_nr, chain_list):
         if l not in rev:
@@ -768,13 +768,13 @@ def metropolis(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_
 
                 E = Enew
                 st_nr += 1
-                if (st_nr%opts.Save)==0 or st_nr == opts.Steps: ###ZAPISUJE KAZDE 100 KROKOW!!!!
+                if (st_nr%100)==0: ###ZAPISUJE KAZDE 100 KROKOW!!!!
                     if GYRATION:
                         print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain, last_pos_chain)
                     else:
                         print "iter", step, "step", st_nr, "energy:", E
-                
-                write_as_pdb(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
+               
+                    write_as_pdb(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
 
     # dump the last state to the pickle
@@ -788,10 +788,7 @@ def metropolis(nr_chrom, revers, chain, binders, attached_to_lamins, state, out_
 
 def output_name(ou, m, n):
     if ou == '':
-        if type(m) == list:
-            f_n = "MC_traj_%ibin_%ichain.pdb" % (len(m), len(n))
-        else:
-            f_n = "MC_traj_%ibin_%ichain.pdb" % (m, n)
+        f_n = "MC_traj_%ibin_%ichain.pdb" % (m, n)
     elif "." in ou:
         f_n = ou.split('.')[0] + ".pdb"
     else:
@@ -822,7 +819,7 @@ else:
     M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
-print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "random_seed ", #ran_seed
+print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", RAD, ", the number of steps is ", opts.Steps, "random_seed ", #ran_seed
 
 t2 = time.time()
 print "initialization: ", t2 - t1

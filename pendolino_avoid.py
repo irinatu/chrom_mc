@@ -17,11 +17,11 @@ BOUND = 2 * R + 2
 #print ran_seed
 
 EMPTY = 0
-BINDER = 1
-LAMIN = 2
-BSITE_R = 3
-BSITE_L = 4
-REGDNA = 5
+LAMIN = 1
+BSITE_L = 2
+REGDNA = 3
+BSITE_R = []
+BINDER = []
 
 DIST = 3
 
@@ -48,7 +48,7 @@ def pars_inp():
         dest = "Ch_lenght",
         default = 512,
         help = "Lenght of the chain (default 512)")
-    optparser.add_option('-b', type = "int",
+    optparser.add_option('-b', type = "string",
         dest = "Binders",
         default = 256,
         help = "Number of binders (default 256)")
@@ -56,12 +56,20 @@ def pars_inp():
         dest = "Save",
         default = 100,
         help = "Save every .... accepted step (default 100")
+    optparser.add_option('-n', type = "string",
+        dest = "Regular_bsites",
+        default = "",
+        help = "Full path to the file names with regular binding sites, separated by comma. Mandatory!")
+    optparser.add_option('-a', type = "string",
+        dest = "Lamin_bsites",
+        default = "",
+        help = "Full path to the file names with lamin binding sites, separated by comma. Mandatory!")
 			
     (opts, args) = optparser.parse_args()
 
-    if len(args) < 2 and opts.In_str =='':
-        print optparser.format_help() #prints help if no arguments
-        sys.exit(1)
+    #if len(args) < 2 and opts.In_str =='':
+    #    print optparser.format_help() #prints help if no arguments
+    #    sys.exit(1)
     return opts	
 
 def init_dist_matrix(max_d = GOOD_NEIGH + 1):
@@ -139,50 +147,62 @@ def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
         if differ[0] == 0:
             pos1 = numpy.array(([next[0], next[1], new_p[2]]))
             pos2 = numpy.array(([next[0], new_p[1], next[2]]))
-            if sta[tuple(pos1)] not in [EMPTY, LAMIN, BINDER] and sta[tuple(pos2)] not in [EMPTY, LAMIN, BINDER]:
+            if sta[tuple(pos1)] not in [EMPTY, LAMIN] + BINDER  and sta[tuple(pos2)] not in [EMPTY, LAMIN] + BINDER :
                 return cross(ch, pos1, pos2)
             else: return False         
         elif differ[1] == 0:
             pos1 = numpy.array(([next[0], next[1], new_p[2]]))
             pos2 = numpy.array(([new_p[0], next[1], next[2]]))
-            if sta[tuple(pos1)] not in [EMPTY, LAMIN, BINDER] and sta[tuple(pos2)] not in [EMPTY, LAMIN, BINDER]:
+            if sta[tuple(pos1)] not in [EMPTY, LAMIN] + BINDER  and sta[tuple(pos2)] not in [EMPTY, LAMIN] + BINDER :
                 return cross(ch, pos1, pos2)
             else: return False
         elif differ[2] == 0:
             pos1 = numpy.array(([next[0], new_p[1], next[2]]))
             pos2 = numpy.array(([new_p[0], next[1], next[2]]))
-            if sta[tuple(pos1)] not in [EMPTY, LAMIN, BINDER] and sta[tuple(pos2)] not in [EMPTY, LAMIN, BINDER]:
+            if sta[tuple(pos1)] not in [EMPTY, LAMIN] + BINDER  and sta[tuple(pos2)] not in [EMPTY, LAMIN] + BINDER :
                 return cross(ch, pos1, pos2)
             else: return False
         else: print new_p, next, "The distance between these two positions are not = sqrt(2)"
 
 def initialize_random(n, m, fa, bound = BOUND):
     chain = numpy.zeros((n, 3), dtype = numpy.int)
-    binders = numpy.zeros((m, 3), dtype = numpy.int)
+    binders = numpy.zeros((sum(m), 3), dtype = numpy.int)
     state = getStateWithLamins(bound, fa)
     attached_to_lamins = []
 
     chain[0] = [bound / 2] * 3
 
-    def get_site_type_list(fpath, length):
-        positions = [0] * length
+    def get_site_type_list(fpath, arra, site_type):
+        #print "lent", length_list, fpath
         for l in open(fpath):
-            positions[int(l) -1] = 1
-        return positions
+            arra[int(l) -1][site_type] = 1
+        return arra
 
-    regular_bsites = get_site_type_list(sys.argv[1], n)
-    lamin_bsites   = get_site_type_list(sys.argv[2], n)
+    
+    regular_bsites = numpy.zeros((n, len(opts.Regular_bsites.split(",")))) ## 3D array, columns - different chr, each array for different binding sites
+    for porz, file_regular in enumerate(opts.Regular_bsites.split(",")):
+        regular_bsites = get_site_type_list(file_regular, regular_bsites, porz)
+    lamin_bsites = numpy.zeros((n, 1))
+    lamin_bsites   = get_site_type_list(opts.Lamin_bsites, lamin_bsites, 0)
+    
+    #regular_bsites = get_site_type_list(sys.argv[1], n)
+    #lamin_bsites   = get_site_type_list(sys.argv[2], n)
 
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
-        if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
-            print "The lamin site are the same as regular! Please change it and rerun the program", i
-            return BSITE_R
-        elif regular_bsites[i] == 1:
-            return BSITE_R
-        elif lamin_bsites[i] == 1:
+        #b = [el[i] for el in regular_bsites] # list with values of ith bin for each binders, len of list = numer of binders
+        #indices = [k for k, x in enumerate(b) if x == 1] # indexes of b list with 1 values
+        indices =  numpy.where(regular_bsites[i] == 1) # regular_bsites - 3D array with layer nr = nr of binding_sites_types, rows - atom_number, columns - chromosomes
+        #print indices,  BSITE_R
+        if len(indices[0]) > 1: 
+            print "ERROR!!! The same sites are assign to the different binders. Check %i atom in the regular sites files" %(i+1)
+            sys.exit(1)
+        if lamin_bsites[i,0] == 1:
             return BSITE_L
+        elif len(indices[0]) == 1:
+            return BSITE_R[indices[0][0]]
         else:
             return REGDNA
+
 
     cur = chain[0]
     state[tuple(cur)] = get_site_type(0, regular_bsites, lamin_bsites)
@@ -204,31 +224,25 @@ def initialize_random(n, m, fa, bound = BOUND):
         cur = chain[i]
         
     mid = bound/2
-    for i in range(m):
-        x = random.randint(0, bound)
-        y = random.randint(0, bound)
-        z = random.randint(0, bound)
-        tries = 0
-        distance = dist_from_mi(x, y, z, mid)
-        while distance > mid-3 or (not (no_collisions((x, y, z), state)) and tries < 100):
+    at_bin = -1
+    for bind, b_nr in zip(m, BINDER):
+        for i in range(bind):
+            at_bin += 1
             x = random.randint(0, bound)
             y = random.randint(0, bound)
             z = random.randint(0, bound)
-            tries += 1
+            tries = 0
             distance = dist_from_mi(x, y, z, mid)
-        binders[i] = [x, y, z]
-        state[tuple(binders[i])] = BINDER
+            while distance > mid-3 or (not (no_collisions((x, y, z), state)) and tries < 100):
+                x = random.randint(0, bound)
+                y = random.randint(0, bound)
+                z = random.randint(0, bound)
+                tries += 1
+                distance = dist_from_mi(x, y, z, mid)
+            binders[at_bin] = [x, y, z]
+            state[tuple(binders[at_bin])] = b_nr
     
     
-    #for i in range(m):
-    #    cur = chain[i * n / m]
-    #    mov = 2 * random.choice(MOVES)
-    #    tries = 0
-    #    while tries < 100 and not (no_collisions(tuple(cur + mov), state)):
-    #        mov = 2 * random.choice(MOVES)
-    #        tries += 1
-    #    binders[i] = cur + mov
-    #    state[tuple(binders[i])] = BINDER
 
     return chain, binders, attached_to_lamins, state
 
@@ -265,10 +279,10 @@ def bonds(chain, stat):
         if molecule == REGDNA:
             continue
  
-        elif molecule == BSITE_R:
-            binding = [BINDER]
+        elif molecule in BSITE_R:
+            binding = [BINDER[BSITE_R.index(molecule)]]
         elif molecule == BSITE_L:
-            binding = [LAMIN, BINDER]
+            binding = [LAMIN] 
         else: print "INNY STAN!!!", j, molecule
         #print j, molecule
         
@@ -276,6 +290,7 @@ def bonds(chain, stat):
         for bmove in BMOVES: 
             new = molecule_pos + bmove
             enc = stat[tuple(new)]
+            #print enc
             if enc in binding:
                 bonds += 1
                 #one_ch_at += 1
@@ -321,7 +336,7 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, na
 
     l = chain.shape[0]
     n = binders.shape[0]
-    f.write("HEADER %i %d step %i\nTITLE %s" % (nb, l + n, metr_step, name))
+    f.write("MODEL %i %d step %i\nTITLE %s" % (nb, l + n, metr_step, name))
     at_nr = 0
 
     def pdb_line(at_name, at_nr, desc, pos):
@@ -332,8 +347,8 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, na
         cur_chain = chain[i]
         if state[tuple(cur_chain)] == REGDNA:
             r = "UNB"
-        elif state[tuple(cur_chain)] == BSITE_R:
-            r = "BOU"
+        elif state[tuple(cur_chain)] in BSITE_R:
+            r = "BO"+str(state[tuple(cur_chain)])
         else: 
             r = "LAM" #BSITE_L
         #else: # BSITE_L
@@ -345,32 +360,16 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, na
         at_nr += 1
         f.write(pdb_line(at_n, at_nr, r, chain[i]))
 
-    #def neighborhood(pos, type_to_search, size = 2):
-    #    res = []
-    #    for i in range(-size, size + 1):
-    #        for j in range(-size, size + 1):
-    #            for k in range(-size, size + 1):
-    #                p = pos + numpy.array([i, j, k])
-    #                if state[tuple(p)] == type_to_search:
-    #                    res.append(p)
-    #    return res
-
-    #highlighted_lamins = []
-    #for pos in attached_to_lamins:
-    #    # find lamins nearby
-    #    neigh = neighborhood(pos, LAMIN)
-    #    # if they are not in the list, add them
-    #    for nei in neigh:
-    #        if not tuple(nei) in highlighted_lamins:
-    #            highlighted_lamins.append(tuple(nei))
 
     chain_at = at_nr
 
     for i in range(n):
         at_nr += 1
-        r = "BIN"
+        ap_binder = binders[i]
+        r = "BI" + str(state[tuple(ap_binder)])
+        #r = "BIN"
         at_n = 'O'
-        f.write(pdb_line(at_n, at_nr, r, binders[i]))
+        f.write(pdb_line(at_n, at_nr, r, ap_binder))
 
     #for hl in highlighted_lamins:
     #    at_nr += 1
@@ -379,9 +378,11 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, na
     #    f.write(pdb_line(at_n, at_nr, r, hl))
 
     for i in range(1, chain_at - 1):
-        line = "\nCONECT" + str(i).rjust(5) +  str(i + 1).rjust(5)
+        if i == 1:
+            line = "\nCONECT" + str(i).rjust(5) +  str(i + 1).rjust(5)
+        else: line = "\nCONECT" + str(i).rjust(5) + str(i - 1).rjust(5) + str(i + 1).rjust(5)
         f.write(line)
-    f.write("\nEND   \n")
+    f.write("\nENDMDL   \n")
 
 def count_bonds(pos, accepted, state):
     bonds = 0
@@ -440,15 +441,16 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     st[tuple(ch[i])] = st[tuple(old)]
                     st[tuple(old)] = EMPTY
                 else: pass
-                if state[tuple(old)] == BSITE_R:
-                    Enew = E + count_bonds(ch[i], [BINDER], state) - count_bonds(old, [BINDER], state)
+                #print state[tuple(old)]
+                if state[tuple(old)] in BSITE_R:
+                    Enew = E + count_bonds(ch[i], [BINDER[BSITE_R.index(state[tuple(old)])]], state) - count_bonds(old, [BINDER[BSITE_R.index(state[tuple(old)])]], state)
                     if CHECK_E:
                         Eslow = bonds(ch, st)
                         if Enew != Eslow:
                             print "R", 'Enew', Enew, 'Eslow', Eslow
                     else: pass
                 elif state[tuple(old)] == BSITE_L:
-                    Enew = E + count_bonds(ch[i], [LAMIN, BINDER], state) - count_bonds(old, [LAMIN, BINDER], state)
+                    Enew = E + count_bonds(ch[i], [LAMIN], state) - count_bonds(old, [LAMIN], state)
                     if CHECK_E:
                         Eslow = bonds(ch, st)
                         if Enew != Eslow: 
@@ -475,7 +477,8 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     st[tuple(b[i])] = st[tuple(old)]
                     st[tuple(old)] = EMPTY
                 else: pass
-                Enew = E + count_bonds(b[i], [BSITE_R, BSITE_L], state) - count_bonds(old, [BSITE_R, BSITE_L], state) 
+                #print b[i],old, tuple(b[i]), state[tuple(old)], BINDER.index(state[tuple(old)]), [BSITE_R[BINDER.index(state[tuple(old)])]]
+                Enew = E + count_bonds(b[i],  [BSITE_R[BINDER.index(state[tuple(old)])]], state) - count_bonds(old,  [BSITE_R[BINDER.index(state[tuple(old)])]], state) 
                 if CHECK_E:
                     Eslow = bonds(ch, st)
                     if Enew != Eslow:
@@ -515,7 +518,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
 def output_name(ou, m, n):
     if ou == '':
-        f_n = "MC_traj_%ibin_%ichain.pdb" % (m, n)
+        f_n = "MC_traj_%ibin_%ichain.pdb" % (m[0], n)
     elif "." in ou:
         f_n = ou.split('.')[0] + ".pdb"
     else:
@@ -524,8 +527,11 @@ def output_name(ou, m, n):
 
 
 
-
 opts = pars_inp()
+
+for r in range(len(opts.Regular_bsites.split(","))):
+  BSITE_R.append(4+r)
+  BINDER.append(4+len(opts.Regular_bsites.split(","))+r) 
 
 if opts.In_str == '':
     rand_init = True
@@ -536,7 +542,7 @@ else:
 t1 = time.time()
 if rand_init: 
     N = opts.Ch_lenght # length of the chain
-    M = opts.Binders # nr of binders
+    M = [int(e) for e in opts.Binders.split(",")] # nr of binders
     fn = output_name(opts.Out_str, M, N)
     c, b, a, state = initialize_random(N, M, fn)
 else: 
