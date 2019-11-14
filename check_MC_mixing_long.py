@@ -49,7 +49,7 @@ def extract_coord(files, bound, ch, steps_subset):
         inF = open(file, 'r')
         coord_mtx = []
         for line in inF:
-            if "HEADER" in line:
+            if "MODEL" in line:
                 str_nr = str_nr +1
                 continue
                 #if str_nr in steps_subset:
@@ -106,7 +106,7 @@ def calc_frames(files):
     for one in files.split():
         f = open(one)
         passage = f.read()
-        words = re.findall(r'HEADER', passage)
+        words = re.findall(r'MODEL', passage)
         #word_counts = Counter(words)
         whole = whole + len(words)
     print whole

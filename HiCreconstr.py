@@ -122,10 +122,11 @@ def extract_contacts(files, bou, start, end, step):
         coord_mtx = []
         for line in inF:
             #print line
-            if "HEADER" in line:
+            if "MODEL" in line:
                 #print line
                 count_str = count_str + 1
                 COOR = False
+                #print start, end, steps
                 if count_str >=  start and count_str <= end and count_str == steps:
                     COOR = True
                     #print start, end, steps, count_str
@@ -134,7 +135,7 @@ def extract_contacts(files, bou, start, end, step):
                 elif count_str >= end: 
                     break 
                 else: coord_mtx = []
-            elif line[0:3] == "END":
+            elif line[0:6] == "ENDMDL":
                 if len(coord_mtx) > 0:
                     coord = np.array(coord_mtx)
                     coord_mtx = []
