@@ -174,10 +174,12 @@ def extract_contacts(files, bou, start, end, step):
     
 def plot_hic(mt):
     fig = plt.figure()
+    nat = np.load("HiC_1618_2L_first1000_clip_and_blud.npy")
     #print mt[5:25, 5:25]
     if opts.Mode ==1:
         mt = clip_and_blur(mt)
-    plt.imshow(mt,origin='lower',norm=LogNorm(), cmap=cm.jet, interpolation='nearest')
+    plt.imshow(np.triu(nat),origin='lower',norm=LogNorm(), cmap=cm.jet, interpolation='nearest')
+    plt.imshow(np.tril(mt,-1),origin='lower',norm=LogNorm(), cmap=cm.jet, interpolation='nearest')
     #plt.imshow(mt,origin='lower', cmap=cm.jet)
     plt.colorbar()
     #plt.show()

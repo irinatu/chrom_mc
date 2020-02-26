@@ -171,8 +171,9 @@ def initialize_random(n, m, fa, bound = BOUND):
 
     def get_site_type(i, regular_bsites, lamin_bsites): # BSITE_R interacts with binders whereas BSITE_L interacts both with lamins and binders
         if regular_bsites[i] == 1 and lamin_bsites[i] == 1:
-            print "The lamin site are the same as regular! Please change it and rerun the program"
-            sys.exit(1)
+            print "The lamin site nr %i is present in both:the regular and the lamin files! It was set tu regular one" %i
+            #sys.exit(1)
+            return BSITE_R
         elif regular_bsites[i] == 1:
             return BSITE_R
         elif lamin_bsites[i] == 1:

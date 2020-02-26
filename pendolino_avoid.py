@@ -182,11 +182,13 @@ def initialize_random(n, m, fa, bound = BOUND):
         return arra
 
     
-    regular_bsites = numpy.zeros((n, len(opts.Regular_bsites.split(",")))) ## 3D array, columns - different chr, each array for different binding sites
+    regular_bsites = numpy.zeros((n, len(opts.Regular_bsites.split(",")))) ## 3D array, columns - different binding types, each array for different binding sites
     for porz, file_regular in enumerate(opts.Regular_bsites.split(",")):
         regular_bsites = get_site_type_list(file_regular, regular_bsites, porz)
     lamin_bsites = numpy.zeros((n, 1))
-    lamin_bsites   = get_site_type_list(opts.Lamin_bsites, lamin_bsites, 0)
+    if opts.Lamin_bsites != "":
+        lamin_bsites   = get_site_type_list(opts.Lamin_bsites, lamin_bsites, 0)
+    else: pass
     
     #regular_bsites = get_site_type_list(sys.argv[1], n)
     #lamin_bsites   = get_site_type_list(sys.argv[2], n)
@@ -195,10 +197,11 @@ def initialize_random(n, m, fa, bound = BOUND):
         #b = [el[i] for el in regular_bsites] # list with values of ith bin for each binders, len of list = numer of binders
         #indices = [k for k, x in enumerate(b) if x == 1] # indexes of b list with 1 values
         indices =  numpy.where(regular_bsites[i] == 1) # regular_bsites - 3D array with layer nr = nr of binding_sites_types, rows - atom_number, columns - chromosomes
-        #print indices,  BSITE_R
         if len(indices[0]) > 1: 
-            print "ERROR!!! The same sites are assign to the different binders. Check %i atom in the regular sites files" %(i+1)
-            sys.exit(1)
+            print "Warning!!! The same sites are assign to the different binders. Check %i atom in the regular sites files. The program use random choice." %(i+1)
+            #print indices, random.choice(indices[0]), BSITE_R[random.choice(indices[0])]
+            #sys.exit(1)
+            return BSITE_R[random.choice(indices[0])]
         if lamin_bsites[i,0] == 1:
             return BSITE_L
         elif len(indices[0]) == 1:
@@ -208,7 +211,10 @@ def initialize_random(n, m, fa, bound = BOUND):
 
 
     cur = chain[0]
+    #if opts.Lamin_bsites != "":
     state[tuple(cur)] = get_site_type(0, regular_bsites, lamin_bsites)
+    #else:
+    #    state[tuple(cur)] = get_site_type(0, regular_bsites)
         
     for i in range(1, n):
         mov = random.choice(MOVES)
@@ -219,7 +225,10 @@ def initialize_random(n, m, fa, bound = BOUND):
             
         assert tries != 100, "unable to find initialization"
         chain[i] = cur + mov
+        #if opts.Lamin_bsites != "":
         state[tuple(chain[i])] = get_site_type(i, regular_bsites, lamin_bsites)
+        #else:
+        #    state[tuple(cur)] = get_site_type(0, regular_bsites)
 
         if state[tuple(chain[i])] == BSITE_L and count_bonds(chain[i], [LAMIN], state) > 0:
             attached_to_lamins.append(tuple(chain[i]))
@@ -411,6 +420,11 @@ GYRATION = True
 CHECK_E = False
 def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
 
+    if GYRATION:
+        print "iter ", "step ", "Energy ", "R_gyr"
+    else:
+        print "iter ", "step ", "Energy"
+
     def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState):
         # dump the last state to the pickle
         l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState]
@@ -505,15 +519,15 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 st_nr += 1
                 if (st_nr%opts.Save)==0 or st_nr == opts.Steps: ###ZAPISUJE KAZDE 100 KROKOW!!!!
                     if GYRATION:
-                        print "iter", step, "step", st_nr, "energy:", E, "R_gyr ", radius_gyr(chain)
+                        print step, " ", st_nr, " ", E, " ", radius_gyr(chain)
                     else:
-                        print "iter", step, "step", st_nr, "energy:", E
+                        print step, " ", st_nr, " ", E
                 
                     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
                     if st_nr == pick_step or st_nr == opts.Steps:
                         pick_step += 50000
-                        put_as_pickle(out_fname, chain, binders, attached_to_lamins, state )
+                        put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
 
     put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
     out_file.close()
