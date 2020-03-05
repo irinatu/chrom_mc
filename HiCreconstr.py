@@ -17,7 +17,7 @@ def pars_inp():
     optparser.add_option('-p', type = "string",
         dest = "First_traj",
         default = '',
-        help = "The trajectory in pdb format")
+        help = "The filename with a list of full name of trajectories in pdb format. Each filename in the new line.")
     #optparser.add_option('-s', type = "string",
      #   dest = "Second_traj",
       #  default = '',
@@ -115,7 +115,7 @@ def extract_contacts(files, bou, start, end, step):
     steps = start
     file_nr = 0.0
 
-    for file in files.split():
+    for file in open(files).read().split('\n'):
         print file
         file_nr = file_nr + 1.0
         inF = open(file, 'r')
@@ -132,8 +132,6 @@ def extract_contacts(files, bou, start, end, step):
                     #print start, end, steps, count_str
                     print line, steps
                     steps += step
-                elif count_str >= end: 
-                    break 
                 else: coord_mtx = []
             elif line[0:6] == "ENDMDL":
                 if len(coord_mtx) > 0:
@@ -142,17 +140,22 @@ def extract_contacts(files, bou, start, end, step):
                     #print coord.shape, coord
                     try:
                         inter_mat
+                        print "Calculate a contact map"
                         if opts.Mode ==1:
                             inter_mat = calculate_dist_mtx(coord, inter_mat)
                         elif opts.Mode ==2:
                             inter_mat = calculate_dist_mtx_cutoff(coord, inter_mat)
                     except NameError:
                         inter_mat = np.zeros((coord.shape[0], coord.shape[0]), float)
+                        print "Calculate a contact map"
                         if opts.Mode ==1:
                             inter_mat = calculate_dist_mtx(coord, inter_mat)
                         elif opts.Mode ==2:
                             inter_mat = calculate_dist_mtx_cutoff(coord, inter_mat)
                 else: coord_mtx = []
+                if count_str >= end: 
+                    return inter_mat 
+                
                 
             elif bou and COOR:
                 #print 'DODAJE'

@@ -516,18 +516,18 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
             if E != Enew:
 
                 E = Enew
-                st_nr += 1
-                if (st_nr%opts.Save)==0 or st_nr == opts.Steps: ###ZAPISUJE KAZDE 100 KROKOW!!!!
-                    if GYRATION:
-                        print step, " ", st_nr, " ", E, " ", radius_gyr(chain)
-                    else:
-                        print step, " ", st_nr, " ", E
-                
-                    write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
+            st_nr += 1
+            if (st_nr%opts.Save)==0 or st_nr == opts.Steps: ###ZAPISUJE KAZDE 100 KROKOW!!!!
+                if GYRATION:
+                    print step, " ", st_nr, " ", E, " ", radius_gyr(chain)
+                else:
+                    print step, " ", st_nr, " ", E
+            
+                write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
-                    if st_nr == pick_step or st_nr == opts.Steps:
-                        pick_step += 50000
-                        put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
+            if st_nr == pick_step or st_nr == opts.Steps:
+                pick_step += 50000
+                put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
 
     put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
     out_file.close()
