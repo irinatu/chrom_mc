@@ -418,12 +418,13 @@ def radius_gyr(chai):
 DELTA=2
 GYRATION = True
 CHECK_E = False
+
 def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chromosome", n = 100):
 
     if GYRATION:
-        print "iter ", "step ", "Energy ", "R_gyr"
+        out_file_out.write("iter, step, Energy, R_gyr\n")
     else:
-        print "iter ", "step ", "Energy"
+        out_file_out.write("iter, step, Energy\n")
 
     def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState):
         # dump the last state to the pickle
@@ -434,9 +435,9 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
 
     out_file = open(out_fname, "w")
     st_nr = 0
-    pick_step = 50000
+    pick_step = 5000000
     E = bonds(chain, state)
-    print "Starting energy:", E
+    out_file_out.write("Starting energy: %f\n" %E)
     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
 
     for step in xrange(n):
@@ -499,7 +500,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 if CHECK_E:
                     Eslow = bonds(ch, st)
                     if Enew != Eslow:
-                        print "B", 'Enew', Enew, 'Eslow', Eslow
+                        print  "B, Enew", Enew, 'Eslow', Eslow
                 else: pass
         else:
             Enew = E
@@ -519,9 +520,9 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
             st_nr += 1
             if (st_nr%opts.Save)==0 or st_nr == opts.Steps: ###ZAPISUJE KAZDE 100 KROKOW!!!!
                 if GYRATION:
-                    print step, " ", st_nr, " ", E, " ", radius_gyr(chain)
+                    out_file_out.write ("%i, %i, %i, %f\n" %(step, st_nr, E, radius_gyr(chain)))
                 else:
-                    print step, " ", st_nr, " ", E
+                    out_file_out.write ("%i, %i, %f\n" %(step, st_nr, E))
             
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
@@ -568,14 +569,18 @@ else:
     #M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 
-print "The lenght of the chain is ", N, ", the number of binders is ", M, ", the nucleus radius is ", R, ", the number of steps is ", opts.Steps, "bsites ", opts.Regular_bsites, "lamin", opts.Lamin_bsites
+
+outputn_out = fn.split('.pdb')[0] + ".out"
+out_file_out = open(outputn_out, 'w')
+
+out_file_out.write( "The lenght of the chain is %i,  the number of binders is  %s,  the nucleus radius is %i, the number of steps is %i, bsites %s, lamin %s\n" %(N, M, R, opts.Steps, opts.Regular_bsites, opts.Lamin_bsites))
 
 t2 = time.time()
-print "initialization: ", t2 - t1
+out_file_out.write( "initialization: %f\n" %(t2 - t1))
 BOUND = numpy.max(c)
 
 a = []
 metropolis(c, b, a, state, fn, n = opts.Steps)
 t1 = t2
 t2 = time.time()
-print "metropolis: ", t2 - t1
+out_file_out.write( "metropolis: %f\n" %(t2 - t1))
