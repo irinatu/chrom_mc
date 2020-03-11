@@ -1,5 +1,3 @@
-import matplotlib
-matplotlib.use('Agg')
 from matplotlib.mlab import PCA
 import numpy as np
 import optparse, scipy.ndimage

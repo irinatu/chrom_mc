@@ -811,11 +811,11 @@ if rand_init:
     R = opts.Revers.split(',')
     R = map(int, R)
     M = opts.Binders # nr of binders
-    fn = output_name(opts.Out_str, M, N)
+    fn = output_name(opts.Out_str, M, len(N))
     c, b, a, state = initialize_random(N, M, fn, R)
 else: 
     c, b, a, state, N, R = initialize_import(opts.In_str)
-    #N = c.shape[0]
+    N = c.shape[0]
     M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
 

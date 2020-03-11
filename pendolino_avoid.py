@@ -1,4 +1,4 @@
-import numpy,math,time, optparse, sys, pickle
+import numpy,math,time, optparse, sys, pickle, json
 import random as random
 
 #accepted move vectors
@@ -12,8 +12,8 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 R = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
-#ran_seed = 2
-#random.seed(ran_seed)
+ran_seed = 2
+random.seed(ran_seed)
 #print ran_seed
 
 EMPTY = 0
@@ -432,10 +432,20 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         pickle_fname = p_out.split('.pdb')[0] + ".pick"
         pickle_file = open(pickle_fname, 'w')
         pickle.dump(l_obj, pickle_file)
+    
+    def put_as_json(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState):
+        p_chain = p_chain.tolist()
+        p_binders = p_binders.tolist()
+        p_state = p_state.tolist()
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState]
+        print type(p_chain), type(p_binders), type(p_attached_to_lamins), type(p_state), type(p_bindNR), type(p_bsites), type(p_bindersState)
+        json_fname = p_out.split('.pdb')[0] + ".json"
+        json_file = open(json_fname, 'w')
+        json.dump(l_obj, json_file)
 
     out_file = open(out_fname, "w")
     st_nr = 0
-    pick_step = 5000000
+    pick_step = opts.Save
     E = bonds(chain, state)
     out_file_out.write("Starting energy: %f\n" %E)
     write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, 0, name + ";bonds=" + str(E))
@@ -527,10 +537,12 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
             if st_nr == pick_step or st_nr == opts.Steps:
-                pick_step += 50000
-                put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
+                pick_step += opts.Save
+                #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
+                put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
 
-    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
+    #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
+    put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
     out_file.close()
 
 
