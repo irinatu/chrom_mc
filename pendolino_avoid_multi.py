@@ -12,8 +12,8 @@ BMOVES = numpy.array([[1,0,0], [-1,0,0], [0,1,0], [0,-1,0], [0,0,1], [0,0,-1]])
 R = 20
 # 2 x radius + a fringe, because lamin barrier has to be hermetic
 BOUND = 2 * R + 2
-ran_seed = 2
-random.seed(ran_seed)
+#ran_seed = 2
+#random.seed(ran_seed)
 #print ran_seed
 
 EMPTY = 0
@@ -91,6 +91,17 @@ def initialize_import(f):
     b_sites = list_ob[5]
     binder_l = list_ob[6]
     return ch, b, a, state, b_nr, b_sites, binder_l
+    
+def initialize_import_json(f):
+    list_ob = json.load(open(f))
+    ch = numpy.asarray(list_ob[0])
+    b = numpy.asarray(list_ob[1])
+    a = list_ob[2]
+    state = numpy.asarray(list_ob[3])
+    b_nr = list_ob[4]
+    b_sites = list_ob[5]
+    binder_l = list_ob[6]
+    return ch, b, a, state, b_nr, b_sites, binder_l
 
 def dist_from_mi(x, y, z, mi):
         return math.sqrt((x - mi)**2 + (y - mi)**2 + (z - mi)**2)
@@ -142,11 +153,17 @@ def cross(cha, po1, po2):
     else: print "Two atoms of the chain have the same coordinates. Please check ", po1, po2, pier[0], dru[0]
     
 def intersect(new_p, next, sta, ch): #coordinates of two next polimer points
+    #import functools, operator # to reduce list of list to the flat list
     #print dist(next, new_p), distance(next, new_p)
+    def flatten(lst):
+	    return sum( ([x] if not isinstance(x, list) else flatten(x) for x in lst), [] )
+    
+    #BINDER_flat = list(set(flatten(BINDER_dic.values()))) # uniqe values of BINDER 
     if  dist(next, new_p) == 1: 
-        return False
+        return False	    
     elif dist(next, new_p) > 1:
         differ = new_p - next
+        #print "TO", BINDER, flatten(BINDER)
         if differ[0] == 0:
             pos1 = numpy.array(([next[0], next[1], new_p[2]]))
             pos2 = numpy.array(([next[0], new_p[1], next[2]]))
@@ -198,10 +215,14 @@ def initialize_random(n, m, fa, bound = BOUND):
         #indices = [k for k, x in enumerate(b) if x == 1] # indexes of b list with 1 values
         indices =  numpy.where(regular_bsites[i] == 1) # regular_bsites - 3D array with layer nr = nr of binding_sites_types, rows - atom_number, columns - chromosomes
         if len(indices[0]) > 1: 
-            print "Warning!!! The same sites are assign to the different binders. Check %i atom in the regular sites files. The program use random choice." %(i+1)
-            #print indices, random.choice(indices[0]), BSITE_R[random.choice(indices[0])]
+            print "Warning!!! The  %i atom is assign to the different binders. " %(i+1)
+            ke = tuple([ BSITE_R[index] for index in indices[0]]) # key of the reverse dictionary, to find number for state item for  the atom that can bind more than one binders
+            val = BSITE_dic_re[ke]
+            #print indices, indices[0], ke, val
             #sys.exit(1)
-            return BSITE_R[random.choice(indices[0])]
+            return val
+            #return BSITE_R[BINDER_dic.keys().index(val)]
+            #return BSITE_R[random.choice(indices[0])]
         if lamin_bsites[i,0] == 1:
             return BSITE_L
         elif len(indices[0]) == 1:
@@ -292,7 +313,9 @@ def bonds(chain, stat):
             continue
  
         elif molecule in BSITE_R:
-            binding = [BINDER[BSITE_R.index(molecule)]]
+            #print "BSITE_R", molecule, BSITE_R, BSITE_BINDER, [BSITE_BINDER[molecule]]
+            #binding = ([BSITE_BINDER[molecule]] if not isinstance(BSITE_BINDER[molecule], list) else BSITE_BINDER[molecule])
+            binding = BSITE_BINDER[molecule]
         elif molecule == BSITE_L:
             binding = [LAMIN] 
         else: print "INNY STAN!!!", j, molecule
@@ -302,7 +325,7 @@ def bonds(chain, stat):
         for bmove in BMOVES: 
             new = molecule_pos + bmove
             enc = stat[tuple(new)]
-            #print enc
+            #print enc, binding
             if enc in binding:
                 bonds += 1
                 #one_ch_at += 1
@@ -360,7 +383,10 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, na
         if state[tuple(cur_chain)] == REGDNA:
             r = "UNB"
         elif state[tuple(cur_chain)] in BSITE_R:
-            r = "BO"+str(state[tuple(cur_chain)])
+            if len(str(state[tuple(cur_chain)])) == 1:
+                r = "SI"+str(state[tuple(cur_chain)])
+            else: 
+                r = "S"+str(state[tuple(cur_chain)])
         else: 
             r = "LAM" #BSITE_L
         #else: # BSITE_L
@@ -378,7 +404,10 @@ def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, na
     for i in range(n):
         at_nr += 1
         ap_binder = binders[i]
-        r = "BI" + str(state[tuple(ap_binder)])
+        if len(str(state[tuple(ap_binder)])) == 1:
+            r = "BI" + str(state[tuple(ap_binder)])
+        else:
+            r = "B" + str(state[tuple(ap_binder)])
         #r = "BIN"
         at_n = 'O'
         f.write(pdb_line(at_n, at_nr, r, ap_binder))
@@ -438,7 +467,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         p_binders = p_binders.tolist()
         p_state = p_state.tolist()
         l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState]
-        print type(p_chain), type(p_binders), type(p_attached_to_lamins), type(p_state), type(p_bindNR), type(p_bsites), type(p_bindersState)
+        #print type(p_chain), type(p_binders), type(p_attached_to_lamins), type(p_state), type(p_bindNR), type(p_bsites), type(p_bindersState)
         json_fname = p_out.split('.pdb')[0] + ".json"
         json_file = open(json_fname, 'w')
         json.dump(l_obj, json_file)
@@ -471,7 +500,9 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 else: pass
                 #print state[tuple(old)]
                 if state[tuple(old)] in BSITE_R:
-                    Enew = E + count_bonds(ch[i], [BINDER[BSITE_R.index(state[tuple(old)])]], state) - count_bonds(old, [BINDER[BSITE_R.index(state[tuple(old)])]], state)
+                    #ac = ([BSITE_BINDER[state[tuple(old)]]] if not isinstance(BSITE_BINDER[state[tuple(old)]], list) else BSITE_BINDER[state[tuple(old)]])
+                    #print ([BSITE_BINDER[state[tuple(old)]]] if not isinstance(BSITE_BINDER[state[tuple(old)]], list) else BSITE_BINDER[state[tuple(old)]])
+                    Enew = E + count_bonds(ch[i], BSITE_BINDER[state[tuple(old)]], state) - count_bonds(old, BSITE_BINDER[state[tuple(old)]], state)
                     if CHECK_E:
                         Eslow = bonds(ch, st)
                         if Enew != Eslow:
@@ -505,8 +536,10 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     st[tuple(b[i])] = st[tuple(old)]
                     st[tuple(old)] = EMPTY
                 else: pass
+                bsite_r_accep = [ke for ke, va in BSITE_BINDER.items() if state[tuple(old)] in va]
                 #print b[i],old, tuple(b[i]), state[tuple(old)], BINDER.index(state[tuple(old)]), [BSITE_R[BINDER.index(state[tuple(old)])]]
-                Enew = E + count_bonds(b[i],  [BSITE_R[BINDER.index(state[tuple(old)])]], state) - count_bonds(old,  [BSITE_R[BINDER.index(state[tuple(old)])]], state) 
+                #Enew = E + count_bonds(b[i],  [BSITE_R[BINDER.index(state[tuple(old)])]], state) - count_bonds(old,  [BSITE_R[BINDER.index(state[tuple(old)])]], state) 
+                Enew = E + count_bonds(b[i],  bsite_r_accep, state) - count_bonds(old,  bsite_r_accep, state) 
                 if CHECK_E:
                     Eslow = bonds(ch, st)
                     if Enew != Eslow:
@@ -533,7 +566,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     out_file_out.write ("%i, %i, %i, %f\n" %(step, st_nr, E, radius_gyr(chain)))
                 else:
                     out_file_out.write ("%i, %i, %f\n" %(step, st_nr, E))
-            
+                print st_nr
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
             if st_nr == pick_step or st_nr == opts.Steps:
@@ -571,12 +604,36 @@ if rand_init:
     N = opts.Ch_lenght # length of the chain
     M = [int(e) for e in opts.Binders.split(",")] # nr of binders
     fn = output_name(opts.Out_str, M, N)
+    BSITE_pre = []
     for r in range(len(opts.Regular_bsites.split(","))):
-        BSITE_R.append(4+r)
-        BINDER.append(4+len(opts.Regular_bsites.split(","))+r) 
+        BSITE_pre.append(4+r)
+        #BINDER_pre.append(4+len(opts.Regular_bsites.split(","))+r)
+    
+    import itertools # add all possible combinations of binders
+    BSITE_R = list(BSITE_pre)
+    for l in range(2, len(BSITE_R)+1):
+        for subset in itertools.combinations(BSITE_R, l):
+            BSITE_pre.append(list(subset))
+    BSITE_R = range(4,4+len(BSITE_pre))
+    BSITE_dic = dict(zip(BSITE_R, BSITE_pre)) # dictionary for more than one type of connected binder
+    BSITE_dic_re = dict(zip(map(lambda x: tuple(x) if isinstance(x, list) else x, BSITE_pre), BSITE_R))
+    
+    for r in range(len(opts.Regular_bsites.split(","))):
+        BINDER.append(4+len(BSITE_R)+r)
+    
+    BINDER_pre = list(BINDER)
+    BINDER_pre = list(map(lambda el:[el], BINDER_pre))    
+    for l in range(2, len(BINDER)+1):
+        for subset in itertools.combinations(BINDER, l):
+            BINDER_pre.append(list(subset))
+    
+    BSITE_BINDER = dict(zip(BSITE_R, BINDER_pre))
+            
+    print BSITE_R, BINDER, BSITE_dic, BSITE_dic_re, BINDER_pre, BSITE_BINDER
+    
     c, b, a, state = initialize_random(N, M, fn)
 else: 
-    c, b, a, state, M, BSITE_R,  BINDER = initialize_import(opts.In_str)
+    c, b, a, state, M, BSITE_R,  BINDER = initialize_import_json(opts.In_str)
     N = c.shape[0]
     #M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
