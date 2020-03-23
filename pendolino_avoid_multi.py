@@ -90,7 +90,8 @@ def initialize_import(f):
     b_nr = list_ob[4]
     b_sites = list_ob[5]
     binder_l = list_ob[6]
-    return ch, b, a, state, b_nr, b_sites, binder_l
+    bsite_binder = list_ob[7]
+    return ch, b, a, state, b_nr, b_sites, binder_l, bsite_binder
     
 def initialize_import_json(f):
     list_ob = json.load(open(f))
@@ -101,7 +102,11 @@ def initialize_import_json(f):
     b_nr = list_ob[4]
     b_sites = list_ob[5]
     binder_l = list_ob[6]
-    return ch, b, a, state, b_nr, b_sites, binder_l
+    bsite_binder = list_ob[7]
+    print bsite_binder
+    bsite_binder = {int(k):v for k,v in bsite_binder.items()}
+    print bsite_binder
+    return ch, b, a, state, b_nr, b_sites, binder_l, bsite_binder
 
 def dist_from_mi(x, y, z, mi):
         return math.sqrt((x - mi)**2 + (y - mi)**2 + (z - mi)**2)
@@ -313,7 +318,7 @@ def bonds(chain, stat):
             continue
  
         elif molecule in BSITE_R:
-            #print "BSITE_R", molecule, BSITE_R, BSITE_BINDER, [BSITE_BINDER[molecule]]
+            #print "BSITE_R", molecule, BSITE_R, BSITE_BINDER, BSITE_BINDER.keys(), type(BSITE_BINDER.keys()[0])
             #binding = ([BSITE_BINDER[molecule]] if not isinstance(BSITE_BINDER[molecule], list) else BSITE_BINDER[molecule])
             binding = BSITE_BINDER[molecule]
         elif molecule == BSITE_L:
@@ -455,18 +460,18 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
     else:
         out_file_out.write("iter, step, Energy\n")
 
-    def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState):
+    def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder):
         # dump the last state to the pickle
-        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState]
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder]
         pickle_fname = p_out.split('.pdb')[0] + ".pick"
         pickle_file = open(pickle_fname, 'w')
         pickle.dump(l_obj, pickle_file)
     
-    def put_as_json(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState):
+    def put_as_json(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder):
         p_chain = p_chain.tolist()
         p_binders = p_binders.tolist()
         p_state = p_state.tolist()
-        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState]
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder]
         #print type(p_chain), type(p_binders), type(p_attached_to_lamins), type(p_state), type(p_bindNR), type(p_bsites), type(p_bindersState)
         json_fname = p_out.split('.pdb')[0] + ".json"
         json_file = open(json_fname, 'w')
@@ -536,7 +541,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     st[tuple(b[i])] = st[tuple(old)]
                     st[tuple(old)] = EMPTY
                 else: pass
-                bsite_r_accep = [ke for ke, va in BSITE_BINDER.items() if state[tuple(old)] in va]
+                bsite_r_accep = [ke for ke, va in BSITE_BINDER.items() if state[tuple(old)] in va] # find keys based on values of dictionary
                 #print b[i],old, tuple(b[i]), state[tuple(old)], BINDER.index(state[tuple(old)]), [BSITE_R[BINDER.index(state[tuple(old)])]]
                 #Enew = E + count_bonds(b[i],  [BSITE_R[BINDER.index(state[tuple(old)])]], state) - count_bonds(old,  [BSITE_R[BINDER.index(state[tuple(old)])]], state) 
                 Enew = E + count_bonds(b[i],  bsite_r_accep, state) - count_bonds(old,  bsite_r_accep, state) 
@@ -566,16 +571,16 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                     out_file_out.write ("%i, %i, %i, %f\n" %(step, st_nr, E, radius_gyr(chain)))
                 else:
                     out_file_out.write ("%i, %i, %f\n" %(step, st_nr, E))
-                print st_nr
+                #print st_nr
                 write_as_pdb(chain, binders, attached_to_lamins, state, out_file, st_nr, step, name + ";bonds=" + str(E))
                 #print "WRITE!!!"
             if st_nr == pick_step or st_nr == opts.Steps:
                 pick_step += opts.Save
-                #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
-                put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
+                #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
+                put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
 
     #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
-    put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
+    put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
     out_file.close()
 
 
@@ -633,7 +638,7 @@ if rand_init:
     
     c, b, a, state = initialize_random(N, M, fn)
 else: 
-    c, b, a, state, M, BSITE_R,  BINDER = initialize_import_json(opts.In_str)
+    c, b, a, state, M, BSITE_R,  BINDER, BSITE_BINDER = initialize_import_json(opts.In_str)
     N = c.shape[0]
     #M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
