@@ -103,9 +103,25 @@ def initialize_import_json(f):
     b_sites = list_ob[5]
     binder_l = list_ob[6]
     bsite_binder = list_ob[7]
-    print bsite_binder
+    #print bsite_binder
     bsite_binder = {int(k):v for k,v in bsite_binder.items()}
-    print bsite_binder
+    #print bsite_binder
+    return ch, b, a, state, b_nr, b_sites, binder_l, bsite_binder
+
+def initialize_import_msgpack(f):
+    import msgpack
+    list_ob = msgpack.unpack(open(f))
+    ch = numpy.asarray(list_ob[0])
+    b = numpy.asarray(list_ob[1])
+    a = list_ob[2]
+    state = numpy.asarray(list_ob[3])
+    b_nr = list_ob[4]
+    b_sites = list_ob[5]
+    binder_l = list_ob[6]
+    bsite_binder = list_ob[7]
+    #print bsite_binder
+    bsite_binder = {int(k):v for k,v in bsite_binder.items()}
+    #print bsite_binder
     return ch, b, a, state, b_nr, b_sites, binder_l, bsite_binder
 
 def dist_from_mi(x, y, z, mi):
@@ -466,6 +482,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         pickle_fname = p_out.split('.pdb')[0] + ".pick"
         pickle_file = open(pickle_fname, 'w')
         pickle.dump(l_obj, pickle_file)
+        pickle_file.close()
     
     def put_as_json(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder):
         p_chain = p_chain.tolist()
@@ -476,6 +493,20 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         json_fname = p_out.split('.pdb')[0] + ".json"
         json_file = open(json_fname, 'w')
         json.dump(l_obj, json_file)
+        json_file.close()
+        
+    def put_as_msgpack(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder):
+        import msgpack
+        p_chain = p_chain.tolist()
+        p_binders = p_binders.tolist()
+        p_state = p_state.tolist()
+        p_bsiteBinder = {str(k):v for k,v in p_bsiteBinder.items()}
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder]
+        #print type(p_chain), type(p_binders), type(p_attached_to_lamins), type(p_state), type(p_bindNR), type(p_bsites), type(p_bindersState)
+        msgpack_fname = p_out.split('.pdb')[0] + ".msgpack"
+        msgpack_file = open(msgpack_fname, 'w')
+        msgpack.pack(l_obj, msgpack_file)
+        msgpack_file.close()
 
     out_file = open(out_fname, "w")
     st_nr = 0
@@ -577,10 +608,10 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
             if st_nr == pick_step or st_nr == opts.Steps:
                 pick_step += opts.Save
                 #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
-                put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
+                put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
 
     #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
-    put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
+    put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
     out_file.close()
 
 
@@ -638,7 +669,7 @@ if rand_init:
     
     c, b, a, state = initialize_random(N, M, fn)
 else: 
-    c, b, a, state, M, BSITE_R,  BINDER, BSITE_BINDER = initialize_import_json(opts.In_str)
+    c, b, a, state, M, BSITE_R,  BINDER, BSITE_BINDER = initialize_import_msgpack(opts.In_str)
     N = c.shape[0]
     #M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
