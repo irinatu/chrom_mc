@@ -117,12 +117,12 @@ def initialize_import_msgpack(f):
     state = numpy.asarray(list_ob[3])
     b_nr = list_ob[4]
     b_sites = list_ob[5]
-    binder_l = list_ob[6]
-    bsite_binder = list_ob[7]
+    #binder_l = list_ob[6]
+    bsite_binder = list_ob[6]
     #print bsite_binder
     bsite_binder = {int(k):v for k,v in bsite_binder.items()}
     #print bsite_binder
-    return ch, b, a, state, b_nr, b_sites, binder_l, bsite_binder
+    return ch, b, a, state, b_nr, b_sites, bsite_binder
 
 def dist_from_mi(x, y, z, mi):
         return math.sqrt((x - mi)**2 + (y - mi)**2 + (z - mi)**2)
@@ -134,9 +134,7 @@ def getStateWithLamins(bound, f):
     lam_name = f.split('.pdb')[0] + '_lamin.pdb'
     save_lam = open(lam_name, "w")
     save_lam.write("MODEL LAMINA")
-    at_nr = 1
-
-    
+    at_nr = 1    
 
     for x in range(BOUND):
         for y in range(BOUND):
@@ -294,9 +292,7 @@ def initialize_random(n, m, fa, bound = BOUND):
                 tries += 1
                 distance = dist_from_mi(x, y, z, mid)
             binders[at_bin] = [x, y, z]
-            state[tuple(binders[at_bin])] = b_nr
-    
-    
+            state[tuple(binders[at_bin])] = b_nr 
 
     return chain, binders, attached_to_lamins, state
 
@@ -484,25 +480,23 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         pickle.dump(l_obj, pickle_file)
         pickle_file.close()
     
-    def put_as_json(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder):
+    def put_as_json(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder):
         p_chain = p_chain.tolist()
         p_binders = p_binders.tolist()
         p_state = p_state.tolist()
-        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder]
-        #print type(p_chain), type(p_binders), type(p_attached_to_lamins), type(p_state), type(p_bindNR), type(p_bsites), type(p_bindersState)
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder]
         json_fname = p_out.split('.pdb')[0] + ".json"
         json_file = open(json_fname, 'w')
         json.dump(l_obj, json_file)
         json_file.close()
         
-    def put_as_msgpack(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder):
+    def put_as_msgpack(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder):
         import msgpack
         p_chain = p_chain.tolist()
         p_binders = p_binders.tolist()
         p_state = p_state.tolist()
         p_bsiteBinder = {str(k):v for k,v in p_bsiteBinder.items()}
-        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder]
-        #print type(p_chain), type(p_binders), type(p_attached_to_lamins), type(p_state), type(p_bindNR), type(p_bsites), type(p_bindersState)
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder]
         msgpack_fname = p_out.split('.pdb')[0] + ".msgpack"
         msgpack_file = open(msgpack_fname, 'w')
         msgpack.pack(l_obj, msgpack_file)
@@ -537,7 +531,6 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 #print state[tuple(old)]
                 if state[tuple(old)] in BSITE_R:
                     #ac = ([BSITE_BINDER[state[tuple(old)]]] if not isinstance(BSITE_BINDER[state[tuple(old)]], list) else BSITE_BINDER[state[tuple(old)]])
-                    #print ([BSITE_BINDER[state[tuple(old)]]] if not isinstance(BSITE_BINDER[state[tuple(old)]], list) else BSITE_BINDER[state[tuple(old)]])
                     Enew = E + count_bonds(ch[i], BSITE_BINDER[state[tuple(old)]], state) - count_bonds(old, BSITE_BINDER[state[tuple(old)]], state)
                     if CHECK_E:
                         Eslow = bonds(ch, st)
@@ -608,10 +601,10 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
             if st_nr == pick_step or st_nr == opts.Steps:
                 pick_step += opts.Save
                 #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
-                put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
+                put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
 
     #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
-    put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
+    put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
     out_file.close()
 
 
@@ -669,7 +662,7 @@ if rand_init:
     
     c, b, a, state = initialize_random(N, M, fn)
 else: 
-    c, b, a, state, M, BSITE_R,  BINDER, BSITE_BINDER = initialize_import_msgpack(opts.In_str)
+    c, b, a, state, M, BSITE_R, BSITE_BINDER = initialize_import_msgpack(opts.In_str)
     N = c.shape[0]
     #M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
