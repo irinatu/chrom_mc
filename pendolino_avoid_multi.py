@@ -113,8 +113,8 @@ def initialize_import_json(f):
     return ch, b, a, state, b_nr, b_sites, bsite_binder
 
 def initialize_import_msgpack(f):
-    import msgpack
-    list_ob = msgpack.unpack(open(f))
+    import umsgpack
+    list_ob = umsgpack.unpack(open(f))
     ch = numpy.asarray(list_ob[0])
     b = numpy.asarray(list_ob[1])
     a = list_ob[2]
@@ -496,7 +496,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         json_file.close()
         
     def put_as_msgpack(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder):
-        import msgpack
+        import umsgpack
         p_chain = p_chain.tolist()
         p_binders = p_binders.tolist()
         p_state = p_state.tolist()
@@ -504,7 +504,7 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
         l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder]
         msgpack_fname = p_out.split('.pdb')[0] + ".msgpack"
         msgpack_file = open(msgpack_fname, 'w')
-        msgpack.pack(l_obj, msgpack_file)
+        umsgpack.pack(l_obj, msgpack_file)
         msgpack_file.close()
 
     out_file = open(out_fname, "w")
