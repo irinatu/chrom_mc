@@ -39,7 +39,7 @@ def pars_inp():
     optparser.add_option('-i', type = "string",
         dest = "In_str",
         default = '',
-        help = "An input state (pickled file)")
+        help = "An input state (pickled, json or msgpack file)")
     optparser.add_option('-s', type = "int",
         dest = "Steps",
         default = 100000,
@@ -63,7 +63,11 @@ def pars_inp():
     optparser.add_option('-a', type = "string",
         dest = "Lamin_bsites",
         default = "",
-        help = "Full path to the file names with lamin binding sites, separated by comma. Mandatory!")
+        help = "Full path to the file names with lamin binding sites, separated by comma.")
+    optparser.add_option('-d', type = "string",
+        dest = "Dump_meth",
+        default = "msgpack",
+        help = "Method to save the intermediate state. Default is msgpack, possible to choose: msgpack, pickle, json.")
 			
     (opts, args) = optparser.parse_args()
 
@@ -81,7 +85,7 @@ def init_dist_matrix(max_d = GOOD_NEIGH + 1):
     return dist_matrix
 DIST_MATRIX = init_dist_matrix()
 
-def initialize_import(f):
+def initialize_import_pickle(f):
     list_ob = pickle.load(open(f))
     ch = list_ob[0]
     b = list_ob[1]
@@ -89,9 +93,9 @@ def initialize_import(f):
     state = list_ob[3]
     b_nr = list_ob[4]
     b_sites = list_ob[5]
-    binder_l = list_ob[6]
-    bsite_binder = list_ob[7]
-    return ch, b, a, state, b_nr, b_sites, binder_l, bsite_binder
+    #binder_l = list_ob[6]
+    bsite_binder = list_ob[6]
+    return ch, b, a, state, b_nr, b_sites, bsite_binder
     
 def initialize_import_json(f):
     list_ob = json.load(open(f))
@@ -101,12 +105,12 @@ def initialize_import_json(f):
     state = numpy.asarray(list_ob[3])
     b_nr = list_ob[4]
     b_sites = list_ob[5]
-    binder_l = list_ob[6]
-    bsite_binder = list_ob[7]
+    #binder_l = list_ob[6]
+    bsite_binder = list_ob[6]
     #print bsite_binder
     bsite_binder = {int(k):v for k,v in bsite_binder.items()}
     #print bsite_binder
-    return ch, b, a, state, b_nr, b_sites, binder_l, bsite_binder
+    return ch, b, a, state, b_nr, b_sites, bsite_binder
 
 def initialize_import_msgpack(f):
     import msgpack
@@ -386,6 +390,7 @@ def modify(chain, binders, state, bound = BOUND):
 DIST = 3
 def write_as_pdb(chain, binders, attached_to_lamins, state, f, nb, metr_step, name = "chromosome and binders"):
 
+    f.write("HEADER Atom names %s , %s \n" % (str(BSITE_BINDER), opts.Regular_bsites))
     l = chain.shape[0]
     n = binders.shape[0]
     f.write("MODEL %i %d step %i\nTITLE %s" % (nb, l + n, metr_step, name))
@@ -472,9 +477,9 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
     else:
         out_file_out.write("iter, step, Energy\n")
 
-    def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder):
+    def put_as_pickle(p_out,  p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder):
         # dump the last state to the pickle
-        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bindersState, p_bsiteBinder]
+        l_obj = [p_chain, p_binders, p_attached_to_lamins, p_state, p_bindNR, p_bsites, p_bsiteBinder]
         pickle_fname = p_out.split('.pdb')[0] + ".pick"
         pickle_file = open(pickle_fname, 'w')
         pickle.dump(l_obj, pickle_file)
@@ -600,11 +605,23 @@ def metropolis(chain, binders, attached_to_lamins, state, out_fname, name = "chr
                 #print "WRITE!!!"
             if st_nr == pick_step or st_nr == opts.Steps:
                 pick_step += opts.Save
-                #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER, BSITE_BINDER)
-                put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+                if opts.Dump_meth == "msgpack":
+                    put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+                elif opts.Dump_meth == "json":
+                    put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+                elif opts.Dump_meth == "pickle":
+                    put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+                else: print "There was not a proper method for save intermediate state chosen. Please choose msgpack, json or pickle as -d option. Default is msgpack."
+                
 
     #put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BINDER)
-    put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+    if opts.Dump_meth == "msgpack":
+        put_as_msgpack(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+    elif opts.Dump_meth == "json":
+        put_as_json(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+    elif opts.Dump_meth == "pickle":
+        put_as_pickle(out_fname, chain, binders, attached_to_lamins, state, M,  BSITE_R, BSITE_BINDER)
+    else: print "There was not a proper method for save intermediate state chosen. Please choose msgpack, json or pickle as -d option. Default is msgpack."
     out_file.close()
 
 
@@ -661,8 +678,13 @@ if rand_init:
     print BSITE_R, BINDER, BSITE_dic, BSITE_dic_re, BINDER_pre, BSITE_BINDER
     
     c, b, a, state = initialize_random(N, M, fn)
-else: 
-    c, b, a, state, M, BSITE_R, BSITE_BINDER = initialize_import_msgpack(opts.In_str)
+else:
+    if opts.Dump_meth == "msgpack": 
+        c, b, a, state, M, BSITE_R, BSITE_BINDER = initialize_import_msgpack(opts.In_str)
+    elif opts.Dump_meth == "json":
+        c, b, a, state, M, BSITE_R, BSITE_BINDER = initialize_import_json(opts.In_str)
+    elif opts.Dump_meth == "pickle":
+        c, b, a, state, M, BSITE_R, BSITE_BINDER = initialize_import_pickle(opts.In_str)
     N = c.shape[0]
     #M = b.shape[0]
     fn = output_name(opts.Out_str, M, N)
